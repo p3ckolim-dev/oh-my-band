@@ -168,11 +168,14 @@
               <input type="range" id="tempo-bpm" min="40" max="200" value="80" />
             </div>
           </div>
-          <button id="btn-metronome-sound-toggle" class="btn btn-secondary" style="min-width: 120px;">
+          <button id="btn-metronome-sound-toggle" class="btn btn-secondary" style="min-width: 100px;">
             🔊 소리: 켜짐
           </button>
+          <button id="btn-demo-autoplay" class="btn btn-secondary" style="min-width: 140px; border-color: var(--accent-cyan); color: var(--accent-cyan);">
+            ▶ 악보 자동 연주
+          </button>
           <button id="btn-play-pause-tempo" class="btn btn-primary" style="min-width: 130px;">
-            ▶ 메트로놈 시작 (Space)
+            ▶ 연습 시작 (Space)
           </button>
         </div>
 
@@ -190,7 +193,9 @@
         </div>
 
         <!-- 악보 카드 -->
-        <div class="glass-card sheet-music-card">
+        <div class="glass-card sheet-music-card" style="position: relative;">
+          <!-- 템포 재생 중 흘러가는 세로막대 커서선 -->
+          <div id="playback-cursor" class="playback-cursor"></div>
           <div id="sheet-music-container">
             <!-- abcjs 악보가 여기에 동적으로 SVG 렌더링됩니다. -->
           </div>

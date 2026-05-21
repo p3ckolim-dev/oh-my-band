@@ -19,10 +19,12 @@ export class SheetMusicController {
     this.onStatsChanged = options.onStatsChanged || null;   // fn(accuracy, progressString, progressPercent)
     this.onSongFinished = options.onSongFinished || null;   // fn(finalStats)
     this.onMetronomeTick = options.onMetronomeTick || null; // fn(tickCount)
+    this.onDemoPlayNote = options.onDemoPlayNote || null;   // fn(midi, durationMs)
     
     // Metronome Timing Engine
     this.isMetronomePlaying = false; // Unified metronome flag
     this.isTempoPlaying = false;     // Specific to Tempo Auto-Advance
+    this.isDemoPlaying = false;      // Auto Play Demo flag
     this.tempoBPM = 80;
     this.tempoTimer = null;
     this.mode = "wait"; // 'wait' or 'tempo'
@@ -34,6 +36,9 @@ export class SheetMusicController {
     
     // Track note window in Tempo Mode
     this.noteWindowPlayed = false;
+    
+    // Playback Cursor
+    this.cursorEl = null;
   }
 
   setMode(mode) {
@@ -54,11 +59,17 @@ export class SheetMusicController {
 
   render(abcString) {
     this.stopMetronome();
+    this.stopDemoPlay();
     this.abcString = abcString;
     this.currentIndex = 0;
     this.notesPlayed = 0;
     this.correctNotesPlayed = 0;
     this.accuracy = 100;
+
+    this.cursorEl = document.getElementById("playback-cursor");
+    if (this.cursorEl) {
+      this.cursorEl.classList.remove("active");
+    }
 
     // Render music score as SVG
     this.visualObj = abcjs.renderAbc(this.containerId, this.abcString, {
@@ -182,20 +193,47 @@ export class SheetMusicController {
       const target = this.notes[this.currentIndex];
       
       if (svgNotes[this.currentIndex]) {
-        svgNotes[this.currentIndex].classList.add("abcjs-target");
+        const svgNote = svgNotes[this.currentIndex];
+        svgNote.classList.add("abcjs-target");
         
         // Auto scroll to active note
-        svgNotes[this.currentIndex].scrollIntoView({
+        svgNote.scrollIntoView({
           behavior: "smooth",
           block: "nearest",
           inline: "center"
         });
+
+        // Update Playback Cursor position
+        if (!this.cursorEl) {
+          this.cursorEl = document.getElementById("playback-cursor");
+        }
+        if (this.cursorEl) {
+          const container = document.getElementById(this.containerId);
+          const card = container.closest(".sheet-music-card");
+          
+          if (card) {
+            const noteRect = svgNote.getBoundingClientRect();
+            const cardRect = card.getBoundingClientRect();
+            
+            // Calculate relative coordinates
+            const relativeLeft = noteRect.left - cardRect.left + card.scrollLeft;
+            const relativeTop = noteRect.top - cardRect.top + card.scrollTop;
+            
+            this.cursorEl.style.left = `${relativeLeft + noteRect.width / 2 - 2}px`;
+            this.cursorEl.style.top = `${relativeTop - 5}px`;
+            this.cursorEl.style.height = `${noteRect.height + 10}px`;
+            this.cursorEl.classList.add("active");
+          }
+        }
       }
       
       if (this.onTargetChanged) {
         this.onTargetChanged(target);
       }
     } else {
+      if (this.cursorEl) {
+        this.cursorEl.classList.remove("active");
+      }
       if (this.onTargetChanged) {
         this.onTargetChanged(null);
       }
@@ -366,6 +404,74 @@ export class SheetMusicController {
       this.highlightTargetNote();
       
       this.tempoModeMetronomeStep();
+    }, durationMs);
+  }
+
+  // --- AUTO-PLAY DEMO ENGINE ---
+  startDemoPlay() {
+    this.stopMetronome();
+    this.stopDemoPlay();
+    
+    this.isDemoPlaying = true;
+    this.currentIndex = 0;
+    this.notesPlayed = 0;
+    this.correctNotesPlayed = 0;
+    this.accuracy = 100;
+    
+    this.updateStats();
+    this.highlightTargetNote();
+    
+    this.demoPlayStep();
+  }
+
+  stopDemoPlay() {
+    this.isDemoPlaying = false;
+    if (this.tempoTimer) {
+      clearTimeout(this.tempoTimer);
+      this.tempoTimer = null;
+    }
+    if (this.cursorEl) {
+      this.cursorEl.classList.remove("active");
+    }
+  }
+
+  demoPlayStep() {
+    if (!this.isDemoPlaying) return;
+    
+    if (this.currentIndex >= this.notes.length) {
+      this.stopDemoPlay();
+      if (this.onSongFinished) {
+        this.onSongFinished({
+          accuracy: 100,
+          totalNotes: this.notes.length,
+          isDemo: true
+        });
+      }
+      return;
+    }
+
+    const targetNote = this.notes[this.currentIndex];
+    const isStrong = (this.currentIndex % 4 === 0);
+    this.playClickSound(isStrong);
+    
+    if (this.onMetronomeTick) {
+      this.onMetronomeTick(this.currentIndex);
+    }
+    
+    const durationMs = (targetNote.duration * 60000) / this.tempoBPM;
+
+    // Trigger demo play callback to main.js for virtual piano rolls
+    if (this.onDemoPlayNote) {
+      this.onDemoPlayNote(targetNote.midi, durationMs);
+    }
+    
+    this.markNoteElement("correct"); // Visual neon green correct tick in demo
+    
+    this.tempoTimer = setTimeout(() => {
+      this.currentIndex++;
+      this.updateStats();
+      this.highlightTargetNote();
+      this.demoPlayStep();
     }, durationMs);
   }
 }

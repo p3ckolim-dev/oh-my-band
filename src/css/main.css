@@ -521,6 +521,22 @@ textarea:focus {
   filter: drop-shadow(0 0 4px rgba(255, 51, 102, 0.8));
 }
 
+/* Playback Cursor Bar */
+.playback-cursor {
+  position: absolute;
+  width: 4px;
+  background: linear-gradient(to bottom, var(--accent-orange), var(--accent-cyan));
+  box-shadow: 0 0 10px rgba(255, 123, 0, 0.8), 0 0 15px rgba(0, 240, 255, 0.6);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0;
+  transition: left 0.12s linear, top 0.15s ease-out, height 0.15s ease-out, opacity 0.2s ease;
+}
+.playback-cursor.active {
+  opacity: 1;
+}
+
 /* Feedback bar */
 .feedback-bar {
   display: flex;

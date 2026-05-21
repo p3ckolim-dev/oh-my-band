@@ -44,7 +44,8 @@ class App {
       onTargetChanged: (targetNote) => this.handleTargetNoteChanged(targetNote),
       onStatsChanged: (acc, progStr, progPercent) => this.handleStatsChanged(acc, progStr, progPercent),
       onSongFinished: (stats) => this.handleSongFinished(stats),
-      onMetronomeTick: (tick) => this.handleMetronomeTick(tick)
+      onMetronomeTick: (tick) => this.handleMetronomeTick(tick),
+      onDemoPlayNote: (midi, durationMs) => this.handleDemoPlayNote(midi, durationMs)
     });
     
     // MIDI device updates
@@ -102,6 +103,7 @@ class App {
     this.bpmVal = document.getElementById("bpm-val");
     this.tempoBPM = document.getElementById("tempo-bpm");
     this.btnMetronomeSoundToggle = document.getElementById("btn-metronome-sound-toggle");
+    this.btnDemoAutoplay = document.getElementById("btn-demo-autoplay");
     this.btnPlayPauseTempo = document.getElementById("btn-play-pause-tempo");
     this.metroLight = document.getElementById("metro-light");
   }
@@ -220,6 +222,11 @@ class App {
       this.sheetController.setMetronomeSound(this.isMetronomeSoundOn);
       this.btnMetronomeSoundToggle.textContent = this.isMetronomeSoundOn ? "🔊 소리: 켜짐" : "🔇 소리: 꺼짐";
       this.btnMetronomeSoundToggle.className = this.isMetronomeSoundOn ? "btn btn-secondary" : "btn btn-secondary text-muted";
+    });
+
+    // Demo auto play toggle in practice
+    this.btnDemoAutoplay.addEventListener("click", () => {
+      this.toggleDemoAutoplay();
     });
 
     // Metronome toggle play/pause in practice
@@ -405,7 +412,18 @@ class App {
   }
 
   handleSongFinished(stats) {
-    this.btnPlayPauseTempo.textContent = this.practiceMode === "wait" ? "▶ 메트로놈 시작 (Space)" : "▶ 연습 시작 (Space)";
+    if (stats.isDemo) {
+      this.btnDemoAutoplay.textContent = "▶ 악보 자동 연주";
+      this.btnDemoAutoplay.className = "btn btn-secondary";
+      this.btnDemoAutoplay.style.color = "var(--accent-cyan)";
+      this.btnDemoAutoplay.style.borderColor = "var(--accent-cyan)";
+      
+      alert("🎉 곡 자동 연주(데모)가 완료되었습니다!");
+      this.stopPractice();
+      return;
+    }
+
+    this.btnPlayPauseTempo.textContent = this.practiceMode === "wait" ? "▶ 연습 시작 (Space)" : "▶ 연습 시작 (Space)";
     this.btnPlayPauseTempo.className = "btn btn-primary";
     
     alert(`🎉 곡을 모두 연주하셨습니다!\n최종 정확도: ${stats.accuracy}%`);
@@ -456,8 +474,16 @@ class App {
 
   stopPractice() {
     this.sheetController.stopMetronome();
+    this.sheetController.stopDemoPlay();
     this.stopMicrophone();
     this.pianoRoll.clearTargets();
+    
+    if (this.btnDemoAutoplay) {
+      this.btnDemoAutoplay.textContent = "▶ 악보 자동 연주";
+      this.btnDemoAutoplay.className = "btn btn-secondary";
+      this.btnDemoAutoplay.style.color = "var(--accent-cyan)";
+      this.btnDemoAutoplay.style.borderColor = "var(--accent-cyan)";
+    }
     
     this.targetNoteName.textContent = "준비 중";
     this.targetNoteInfo.textContent = "(키보드 안내를 보세요)";
@@ -478,6 +504,10 @@ class App {
   }
 
   toggleMetronome() {
+    if (this.sheetController.isDemoPlaying) {
+      this.toggleDemoAutoplay();
+    }
+    
     if (this.sheetController.isMetronomePlaying) {
       this.sheetController.stopMetronome();
       this.btnPlayPauseTempo.textContent = this.practiceMode === "wait" ? "▶ 메트로놈 시작 (Space)" : "▶ 연습 시작 (Space)";
@@ -501,6 +531,42 @@ class App {
     } else {
       document.exitFullscreen();
       this.btnFullscreen.textContent = "🖥️ 전체화면";
+    }
+  }
+
+  handleDemoPlayNote(midi, durationMs) {
+    // Play synthesized piano sound
+    this.pianoRoll.playSynthSound(midi);
+    this.pianoRoll.highlightPlay(midi, "correct");
+    
+    // Stop the note sound and release physical key bed animation after duration
+    setTimeout(() => {
+      this.pianoRoll.stopSynthSound(midi);
+      this.pianoRoll.releasePlay(midi);
+    }, durationMs - 50); // 50ms gap to separate contiguous identical notes
+  }
+
+  toggleDemoAutoplay() {
+    if (this.sheetController.isDemoPlaying) {
+      this.sheetController.stopDemoPlay();
+      this.btnDemoAutoplay.textContent = "▶ 악보 자동 연주";
+      this.btnDemoAutoplay.className = "btn btn-secondary";
+      this.btnDemoAutoplay.style.color = "var(--accent-cyan)";
+      this.btnDemoAutoplay.style.borderColor = "var(--accent-cyan)";
+    } else {
+      // Lazy init audio context
+      this.pianoRoll.lazyInitAudio();
+      
+      // Stop metronome if active
+      if (this.sheetController.isMetronomePlaying) {
+        this.toggleMetronome();
+      }
+      
+      this.sheetController.startDemoPlay();
+      this.btnDemoAutoplay.textContent = "⏸ 자동 연주 정지";
+      this.btnDemoAutoplay.className = "btn btn-secondary text-orange";
+      this.btnDemoAutoplay.style.color = "var(--accent-orange)";
+      this.btnDemoAutoplay.style.borderColor = "var(--accent-orange)";
     }
   }
 }
