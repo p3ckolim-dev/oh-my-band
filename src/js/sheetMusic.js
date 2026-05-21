@@ -94,37 +94,112 @@ export class SheetMusicController {
   // Traverse abcjs tune AST to build sequential note index
   parseNotes() {
     this.notes = [];
-    if (!this.visualObj || this.visualObj.length === 0) return;
+    if (!this.visualObj || this.visualObj.length === 0) {
+      console.log("parseNotes: visualObj is empty!");
+      return;
+    }
     
     const tune = this.visualObj[0];
+    console.log("parseNotes: tune=", tune);
     const lines = tune.lines || [];
+    console.log("parseNotes: lines count=", lines.length);
+    
+    const offsetMap = [0, 2, 4, 5, 7, 9, 11]; // C, D, E, F, G, A, B
     
     for (const line of lines) {
       const staffs = line.staff || line.staffs || [];
       const staffsArray = Array.isArray(staffs) ? staffs : [staffs];
+      console.log("parseNotes: staffsArray count=", staffsArray.length);
       
       for (const staff of staffsArray) {
+        // Parse key signature accidentals for this staff
+        let keyAccidentals = {};
+        if (staff.key && staff.key.accidentals) {
+          for (const accObj of staff.key.accidentals) {
+            const dName = accObj.note.toUpperCase();
+            let offset = 0;
+            if (accObj.acc === "sharp") offset = 1;
+            else if (accObj.acc === "flat") offset = -1;
+            else if (accObj.acc === "dblsharp") offset = 2;
+            else if (accObj.acc === "dblflat") offset = -2;
+            keyAccidentals[dName] = offset;
+          }
+        }
+        
         const voices = staff.voices || [];
+        console.log("parseNotes: voices count=", voices.length);
         for (const voice of voices) {
-          if (!Array.isArray(voice)) continue;
+          if (!Array.isArray(voice)) {
+            console.log("parseNotes: voice is not an array:", voice);
+            continue;
+          }
           
           for (const el of voice) {
-            // Filter only elements representing playable notes
-            if (el.el_type === "note" && el.pitches && el.pitches.length > 0) {
-              const pitchObj = el.pitches[0];
-              if (pitchObj.midipitch) {
-                this.notes.push({
-                  midi: pitchObj.midipitch,
-                  name: PianoRoll.getNoteName(pitchObj.midipitch),
-                  duration: el.duration || 1, // beat length multiplier
-                  element: el
-                });
+            if (el.el_type === "note") {
+              console.log("parseNotes: found note el=", el);
+              if (el.pitches && el.pitches.length > 0) {
+                const pitchObj = el.pitches[0];
+                console.log("parseNotes: pitchObj=", pitchObj);
+                
+                if (pitchObj.pitch !== undefined) {
+                  const p = pitchObj.pitch;
+                  const name = pitchObj.name || "C";
+                  const accidental = pitchObj.accidental;
+                  
+                  // Calculate base MIDI relative to Middle C (C4 = 60)
+                  let k = Math.floor(p / 7);
+                  let r = p % 7;
+                  if (r < 0) {
+                    r += 7;
+                  }
+                  let baseMidi = 60 + k * 12 + offsetMap[r];
+
+                  let accidentalOffset = 0;
+                  let hasAccidental = false;
+
+                  if (accidental) {
+                    hasAccidental = true;
+                    if (accidental === 'sharp' || accidental === '^') {
+                      accidentalOffset = 1;
+                    } else if (accidental === 'flat' || accidental === '_') {
+                      accidentalOffset = -1;
+                    } else if (accidental === 'dblsharp' || accidental === '^^') {
+                      accidentalOffset = 2;
+                    } else if (accidental === 'dblflat' || accidental === '__') {
+                      accidentalOffset = -2;
+                    } else if (accidental === 'natural' || accidental === '=') {
+                      accidentalOffset = 0;
+                    }
+                  }
+
+                  if (!hasAccidental) {
+                    const diatonicName = name.charAt(0).toUpperCase();
+                    if (keyAccidentals && keyAccidentals[diatonicName] !== undefined) {
+                      accidentalOffset = keyAccidentals[diatonicName];
+                    }
+                  }
+
+                  const midiVal = baseMidi + accidentalOffset;
+                  console.log("parseNotes: pushing note with calculated midi=", midiVal);
+                  
+                  this.notes.push({
+                    midi: midiVal,
+                    name: PianoRoll.getNoteName(midiVal),
+                    duration: el.duration || 1, // beat length multiplier
+                    element: el
+                  });
+                } else {
+                  console.log("parseNotes: pitchObj does not have pitch!");
+                }
+              } else {
+                console.log("parseNotes: note el has no pitches or pitches.length == 0!");
               }
             }
           }
         }
       }
     }
+    console.log("parseNotes final: parsed notes count=", this.notes.length);
   }
 
   // Core Practice Judgment Hook
