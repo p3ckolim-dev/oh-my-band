@@ -69,6 +69,23 @@ E G G E | F A A2 | G C D E | D2 C2 |
 E G G E | F A A2 | G C D E | D2 C2 |
 D D E D | E F G2 | A G E C | D2 D2 |
 E G G E | F A A2 | G C D E | D2 C2 |`
+  },
+  {
+    id: "summer",
+    title: "Summer (기쿠지로의 여름 오프닝 테마)",
+    composer: "히사이시 조 (Joe Hisaishi)",
+    difficulty: "medium",
+    tempo: 110,
+    abc: `X:5
+T:Summer
+C:Joe Hisaishi
+M:4/4
+L:1/4
+Q:1/4=110
+K:C
+G A c d | g e d c | G A c d | g e d2 |
+E F G c | A G E D | C D E G | E D C D |
+E F G c | A G E D | C D E G | C2 c2 |`
   }
 ];
 
