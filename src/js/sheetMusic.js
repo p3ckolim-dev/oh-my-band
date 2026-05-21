@@ -20,31 +20,40 @@ export class SheetMusicController {
     this.onSongFinished = options.onSongFinished || null;   // fn(finalStats)
     this.onMetronomeTick = options.onMetronomeTick || null; // fn(tickCount)
     
-    // Tempo Mode Metronome
-    this.isTempoPlaying = false;
+    // Metronome Timing Engine
+    this.isMetronomePlaying = false; // Unified metronome flag
+    this.isTempoPlaying = false;     // Specific to Tempo Auto-Advance
     this.tempoBPM = 80;
     this.tempoTimer = null;
     this.mode = "wait"; // 'wait' or 'tempo'
     
+    // Metronome Sound details
+    this.isMetronomeSoundOn = true;
+    this.metronomeAudioCtx = null;
+    this.metronomeTickCount = 0;
+    
     // Track note window in Tempo Mode
     this.noteWindowPlayed = false;
-    this.playedNotesInWindow = [];
   }
 
   setMode(mode) {
     this.mode = mode;
-    this.stopTempoMode();
+    this.stopMetronome();
   }
 
   setBPM(bpm) {
     this.tempoBPM = Number(bpm);
-    if (this.isTempoPlaying) {
-      this.restartTempoTimer();
+    if (this.isMetronomePlaying) {
+      this.restartMetronomeTimer();
     }
   }
 
+  setMetronomeSound(enabled) {
+    this.isMetronomeSoundOn = Boolean(enabled);
+  }
+
   render(abcString) {
-    this.stopTempoMode();
+    this.stopMetronome();
     this.abcString = abcString;
     this.currentIndex = 0;
     this.notesPlayed = 0;
@@ -92,7 +101,6 @@ export class SheetMusicController {
             // Filter only elements representing playable notes
             if (el.el_type === "note" && el.pitches && el.pitches.length > 0) {
               const pitchObj = el.pitches[0];
-              // midipitch contains standard MIDI note number (60 for middle C)
               if (pitchObj.midipitch) {
                 this.notes.push({
                   midi: pitchObj.midipitch,
@@ -109,8 +117,6 @@ export class SheetMusicController {
   }
 
   // Core Practice Judgment Hook
-  // Triggered when user plays a note (from Mic or MIDI or Click)
-  // returns: { isMatch, targetNote }
   checkPlayedNote(midiNote) {
     if (this.notes.length === 0 || this.currentIndex >= this.notes.length) return null;
 
@@ -120,7 +126,6 @@ export class SheetMusicController {
       this.notesPlayed++;
       
       if (midiNote === target.midi) {
-        // Correct pitch matching!
         this.correctNotesPlayed++;
         this.markNoteElement("correct");
         
@@ -128,8 +133,8 @@ export class SheetMusicController {
         this.updateStats();
         
         if (this.currentIndex >= this.notes.length) {
-          // Finished!
           this.highlightTargetNote(); // clear
+          this.stopMetronome();
           if (this.onSongFinished) {
             this.onSongFinished({
               accuracy: this.accuracy,
@@ -142,14 +147,12 @@ export class SheetMusicController {
         
         return { isMatch: true, targetNote: target };
       } else {
-        // Wrong note!
         this.markNoteElement("wrong");
         this.updateStats();
         return { isMatch: false, targetNote: target };
       }
     } 
     else if (this.mode === "tempo" && this.isTempoPlaying) {
-      // Tempo mode checks if note is correct during its active window
       if (midiNote === target.midi) {
         if (!this.noteWindowPlayed) {
           this.noteWindowPlayed = true;
@@ -170,7 +173,6 @@ export class SheetMusicController {
 
   // Highlight active note and advance SVG class styling
   highlightTargetNote() {
-    // Reset all notes
     const svgNotes = document.querySelectorAll(`#${this.containerId} .abcjs-note`);
     svgNotes.forEach(el => {
       el.classList.remove("abcjs-target");
@@ -179,12 +181,10 @@ export class SheetMusicController {
     if (this.currentIndex < this.notes.length) {
       const target = this.notes[this.currentIndex];
       
-      // Select the SVG note elements in the page
-      // Note index mapping works 1:1 for basic melodies
       if (svgNotes[this.currentIndex]) {
         svgNotes[this.currentIndex].classList.add("abcjs-target");
         
-        // Auto scroll to active note if sheet music is long and overflows
+        // Auto scroll to active note
         svgNotes[this.currentIndex].scrollIntoView({
           behavior: "smooth",
           block: "nearest",
@@ -213,7 +213,6 @@ export class SheetMusicController {
       } else if (status === "wrong") {
         el.classList.add("abcjs-played-wrong");
         
-        // Remove wrong flash after a brief interval so user can try again
         setTimeout(() => {
           el.classList.remove("abcjs-played-wrong");
         }, 600);
@@ -238,21 +237,60 @@ export class SheetMusicController {
     }
   }
 
-  // --- TEMPO MODE METRONOME ENGINE ---
-  startTempoMode() {
-    if (this.mode !== "tempo") return;
-    this.currentIndex = 0;
-    this.notesPlayed = 0;
-    this.correctNotesPlayed = 0;
-    this.accuracy = 100;
-    this.updateStats();
-    
-    this.isTempoPlaying = true;
-    this.highlightTargetNote();
-    this.restartTempoTimer();
+  // --- UNIFIED METRONOME & AUDIO CLICK ENGINE ---
+
+  playClickSound(isStrong) {
+    if (!this.isMetronomeSoundOn) return;
+    try {
+      if (!this.metronomeAudioCtx) {
+        this.metronomeAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (this.metronomeAudioCtx.state === "suspended") {
+        this.metronomeAudioCtx.resume();
+      }
+      
+      const osc = this.metronomeAudioCtx.createOscillator();
+      const gainNode = this.metronomeAudioCtx.createGain();
+      
+      osc.type = "sine";
+      // First beat of measure has higher pitch
+      osc.frequency.setValueAtTime(isStrong ? 1200 : 800, this.metronomeAudioCtx.currentTime);
+      
+      gainNode.gain.setValueAtTime(0.12, this.metronomeAudioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, this.metronomeAudioCtx.currentTime + 0.05);
+      
+      osc.connect(gainNode);
+      gainNode.connect(this.metronomeAudioCtx.destination);
+      
+      osc.start();
+      osc.stop(this.metronomeAudioCtx.currentTime + 0.06);
+    } catch (e) {
+      console.warn("Metronome sound failed to play", e);
+    }
   }
 
-  stopTempoMode() {
+  startMetronome() {
+    this.stopMetronome();
+    this.isMetronomePlaying = true;
+    this.metronomeTickCount = 0;
+    
+    if (this.mode === "wait") {
+      this.waitModeMetronomeStep();
+    } else if (this.mode === "tempo") {
+      this.currentIndex = 0;
+      this.notesPlayed = 0;
+      this.correctNotesPlayed = 0;
+      this.accuracy = 100;
+      this.updateStats();
+      this.highlightTargetNote();
+      
+      this.isTempoPlaying = true;
+      this.tempoModeMetronomeStep();
+    }
+  }
+
+  stopMetronome() {
+    this.isMetronomePlaying = false;
     this.isTempoPlaying = false;
     if (this.tempoTimer) {
       clearTimeout(this.tempoTimer);
@@ -260,15 +298,41 @@ export class SheetMusicController {
     }
   }
 
-  restartTempoTimer() {
+  restartMetronomeTimer() {
     if (this.tempoTimer) clearTimeout(this.tempoTimer);
-    this.tempoStep();
+    if (this.mode === "wait") {
+      this.waitModeMetronomeStep();
+    } else {
+      this.tempoModeMetronomeStep();
+    }
   }
 
-  tempoStep() {
-    if (!this.isTempoPlaying || this.currentIndex >= this.notes.length) {
-      this.stopTempoMode();
-      if (this.currentIndex >= this.notes.length && this.onSongFinished) {
+  // Wait Mode Metronome: steady background ticking only, no progression
+  waitModeMetronomeStep() {
+    if (!this.isMetronomePlaying || this.mode !== "wait") return;
+    
+    const isStrong = (this.metronomeTickCount % 4 === 0);
+    this.playClickSound(isStrong);
+    
+    if (this.onMetronomeTick) {
+      this.onMetronomeTick(this.metronomeTickCount);
+    }
+    
+    this.metronomeTickCount++;
+    const intervalMs = 60000 / this.tempoBPM;
+    
+    this.tempoTimer = setTimeout(() => {
+      this.waitModeMetronomeStep();
+    }, intervalMs);
+  }
+
+  // Tempo Mode Metronome: steady ticking AND automatic sheet music note progression
+  tempoModeMetronomeStep() {
+    if (!this.isMetronomePlaying || !this.isTempoPlaying || this.mode !== "tempo") return;
+
+    if (this.currentIndex >= this.notes.length) {
+      this.stopMetronome();
+      if (this.onSongFinished) {
         this.onSongFinished({
           accuracy: this.accuracy,
           totalNotes: this.notes.length
@@ -279,20 +343,20 @@ export class SheetMusicController {
 
     const targetNote = this.notes[this.currentIndex];
     
-    // Metronome tick callback for visual pulse
+    const isStrong = (this.currentIndex % 4 === 0);
+    this.playClickSound(isStrong);
+    
     if (this.onMetronomeTick) {
       this.onMetronomeTick(this.currentIndex);
     }
     
-    // Reset window flags
     this.noteWindowPlayed = false;
-    this.notesPlayed++; // Note counted as played (even if missed)
+    this.notesPlayed++; // missed is counted
 
-    // Calculate duration in ms: (duration * 60000) / BPM
+    // Beat length timing window
     const durationMs = (targetNote.duration * 60000) / this.tempoBPM;
     
     this.tempoTimer = setTimeout(() => {
-      // If user failed to play the note in this window, mark it as missed
       if (!this.noteWindowPlayed) {
         this.markNoteElement("wrong");
       }
@@ -301,7 +365,7 @@ export class SheetMusicController {
       this.updateStats();
       this.highlightTargetNote();
       
-      this.tempoStep();
+      this.tempoModeMetronomeStep();
     }, durationMs);
   }
 }

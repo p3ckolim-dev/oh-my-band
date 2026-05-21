@@ -12,6 +12,7 @@ class App {
     this.currentSong = null;
     this.inputSource = "mic"; // 'mic' or 'midi'
     this.practiceMode = "wait"; // 'wait' or 'tempo'
+    this.isMetronomeSoundOn = true;
     
     // Components
     this.pianoRoll = null;
@@ -84,6 +85,7 @@ class App {
     
     // Practice arena HUD details
     this.btnBackLobby = document.getElementById("btn-back-lobby");
+    this.btnFullscreen = document.getElementById("btn-fullscreen");
     this.practiceSongTitle = document.getElementById("practice-song-title");
     this.practiceModeBadge = document.getElementById("practice-mode-badge");
     this.statAccuracy = document.getElementById("stat-accuracy");
@@ -99,12 +101,12 @@ class App {
     this.tempoControlPanel = document.getElementById("tempo-control-panel");
     this.bpmVal = document.getElementById("bpm-val");
     this.tempoBPM = document.getElementById("tempo-bpm");
+    this.btnMetronomeSoundToggle = document.getElementById("btn-metronome-sound-toggle");
     this.btnPlayPauseTempo = document.getElementById("btn-play-pause-tempo");
     this.metroLight = document.getElementById("metro-light");
   }
 
   initViews() {
-    // Initial display
     this.lobbyView.classList.remove("hidden");
     this.practiceView.classList.remove("active");
   }
@@ -123,10 +125,13 @@ class App {
       const desc = document.getElementById("mode-desc");
       if (this.practiceMode === "wait") {
         desc.innerHTML = "* **대기 연습**: 올바른 건반을 연주할 때까지 악보가 멈추고 기다려줍니다. 초보자에게 완벽합니다.";
-        this.tempoControlPanel.style.display = "none";
       } else {
         desc.innerHTML = "* **템포 연습**: 메트로놈 템포 속도에 맞춰 실시간으로 악보가 흘러갑니다. 정확한 타이밍 연주를 연습합니다.";
-        this.tempoControlPanel.style.display = "flex";
+      }
+      
+      // Update text on play button dynamically
+      if (!this.sheetController?.isMetronomePlaying) {
+        this.btnPlayPauseTempo.textContent = this.practiceMode === "wait" ? "▶ 메트로놈 시작 (Space)" : "▶ 연습 시작 (Space)";
       }
     });
 
@@ -188,23 +193,45 @@ class App {
       this.stopPractice();
     });
 
-    // Tempo Mode BPM controller
+    // Fullscreen Mode Toggle
+    this.btnFullscreen.addEventListener("click", () => {
+      this.toggleFullscreen();
+    });
+
+    // Detect escaping fullscreen to sync button label
+    document.addEventListener("fullscreenchange", () => {
+      if (document.fullscreenElement) {
+        this.btnFullscreen.textContent = "📺 창 화면";
+      } else {
+        this.btnFullscreen.textContent = "🖥️ 전체화면";
+      }
+    });
+
+    // Tempo BPM slider
     this.tempoBPM.addEventListener("input", (e) => {
       const bpm = e.target.value;
       this.bpmVal.textContent = `${bpm} BPM`;
       this.sheetController.setBPM(bpm);
     });
 
-    // Metronome toggle play/pause in practice
-    this.btnPlayPauseTempo.addEventListener("click", () => {
-      this.toggleTempoMetronome();
+    // Audio Metronome Sound Toggle
+    this.btnMetronomeSoundToggle.addEventListener("click", () => {
+      this.isMetronomeSoundOn = !this.isMetronomeSoundOn;
+      this.sheetController.setMetronomeSound(this.isMetronomeSoundOn);
+      this.btnMetronomeSoundToggle.textContent = this.isMetronomeSoundOn ? "🔊 소리: 켜짐" : "🔇 소리: 꺼짐";
+      this.btnMetronomeSoundToggle.className = this.isMetronomeSoundOn ? "btn btn-secondary" : "btn btn-secondary text-muted";
     });
 
-    // Keyboard space bar triggers play/pause metronome in Tempo Mode
+    // Metronome toggle play/pause in practice
+    this.btnPlayPauseTempo.addEventListener("click", () => {
+      this.toggleMetronome();
+    });
+
+    // Keyboard space bar triggers play/pause metronome
     window.addEventListener("keydown", (e) => {
-      if (e.code === "Space" && this.practiceView.classList.contains("active") && this.practiceMode === "tempo") {
+      if (e.code === "Space" && this.practiceView.classList.contains("active")) {
         e.preventDefault();
-        this.toggleTempoMetronome();
+        this.toggleMetronome();
       }
     });
   }
@@ -237,8 +264,6 @@ class App {
 
   async setupMicrophone() {
     this.statusText.textContent = "마이크 사용 승인 요청 중...";
-    
-    // Stop MIDI if running
     this.midiInterface.stop();
     
     if (!this.audioDetector) {
@@ -252,11 +277,8 @@ class App {
 
     try {
       await this.audioDetector.start();
-      
       this.statusDot.className = "status-dot listening";
       this.statusText.textContent = "마이크 듣는 중 (소리를 내보세요)";
-      
-      // Start Canvas Spectrum animations
       this.visualizer.start(this.audioDetector.analyser);
     } catch (e) {
       this.statusDot.className = "status-dot";
@@ -295,7 +317,6 @@ class App {
     this.volumeVal.textContent = `${rmsPercentage}%`;
     this.volumeBar.style.width = `${rmsPercentage}%`;
     
-    // Volume threshold logic visualization
     const sensitivity = Number(this.micSensitivity.value);
     const threshold = 5 + (sensitivity / 100) * 15;
     
@@ -322,39 +343,21 @@ class App {
     }
   }
 
-  // Triggered when user plays virtual key OR from high-precision pitch detection
   handlePlayedNote(noteNumber) {
-    // Limit pitch feedback to piano practice screen
     if (!this.practiceView.classList.contains("active")) return;
     
     this.playedNoteName.textContent = PianoRoll.getNoteName(noteNumber);
-    
-    // Core logic matching played note with target sheet music note
     const result = this.sheetController.checkPlayedNote(noteNumber);
     
     if (result) {
-      const { isMatch, targetNote } = result;
+      const { isMatch } = result;
+      this.pianoRoll.highlightPlay(noteNumber, isMatch ? "correct" : "wrong");
       
-      if (isMatch) {
-        // Highlighting the played key as correct (flash green!)
-        this.pianoRoll.highlightPlay(noteNumber, "correct");
-        
-        // Auto fade out glow after short interval
-        if (this.midiNoteOffTimeouts[noteNumber]) clearTimeout(this.midiNoteOffTimeouts[noteNumber]);
-        this.midiNoteOffTimeouts[noteNumber] = setTimeout(() => {
-          this.pianoRoll.releasePlay(noteNumber);
-        }, 350);
-      } else {
-        // Highlighting wrong played key in red
-        this.pianoRoll.highlightPlay(noteNumber, "wrong");
-        
-        if (this.midiNoteOffTimeouts[noteNumber]) clearTimeout(this.midiNoteOffTimeouts[noteNumber]);
-        this.midiNoteOffTimeouts[noteNumber] = setTimeout(() => {
-          this.pianoRoll.releasePlay(noteNumber);
-        }, 350);
-      }
+      if (this.midiNoteOffTimeouts[noteNumber]) clearTimeout(this.midiNoteOffTimeouts[noteNumber]);
+      this.midiNoteOffTimeouts[noteNumber] = setTimeout(() => {
+        this.pianoRoll.releasePlay(noteNumber);
+      }, 350);
     } else {
-      // In Tempo Mode or out-of-score inputs: show neutral glow
       this.pianoRoll.highlightPlay(noteNumber, null);
       if (this.midiNoteOffTimeouts[noteNumber]) clearTimeout(this.midiNoteOffTimeouts[noteNumber]);
       this.midiNoteOffTimeouts[noteNumber] = setTimeout(() => {
@@ -363,9 +366,7 @@ class App {
     }
   }
 
-  // Web MIDI note listeners
   handleMidiNoteOn(noteNumber, velocity) {
-    // MIDI note-on events directly light up the virtual key and trigger judgment!
     this.pianoRoll.playSynthSound(noteNumber);
     this.handlePlayedNote(noteNumber);
   }
@@ -379,11 +380,8 @@ class App {
 
   handleTargetNoteChanged(targetNote) {
     if (targetNote) {
-      const noteName = targetNote.name;
-      this.targetNoteName.textContent = noteName;
+      this.targetNoteName.textContent = targetNote.name;
       this.targetNoteInfo.textContent = `(MIDI 번호: ${targetNote.midi})`;
-      
-      // Guide on the Virtual Piano: Light up the target key in orange!
       this.pianoRoll.highlightTarget(targetNote.midi);
     } else {
       this.targetNoteName.textContent = "곡 완료! 🎉";
@@ -397,7 +395,6 @@ class App {
     this.statProgress.textContent = progressString;
     this.progressBar.style.width = `${progressPercent}%`;
     
-    // Dynamic HUD colors based on current accuracy
     if (accuracy >= 90) {
       this.statAccuracy.className = "stat-val text-green";
     } else if (accuracy >= 70) {
@@ -408,7 +405,7 @@ class App {
   }
 
   handleSongFinished(stats) {
-    this.btnPlayPauseTempo.textContent = "▶ 재시작";
+    this.btnPlayPauseTempo.textContent = this.practiceMode === "wait" ? "▶ 메트로놈 시작 (Space)" : "▶ 연습 시작 (Space)";
     this.btnPlayPauseTempo.className = "btn btn-primary";
     
     alert(`🎉 곡을 모두 연주하셨습니다!\n최종 정확도: ${stats.accuracy}%`);
@@ -416,7 +413,6 @@ class App {
   }
 
   handleMetronomeTick(tickIndex) {
-    // Pulse metronome indicator dot
     this.metroLight.classList.add("tick");
     setTimeout(() => {
       this.metroLight.classList.remove("tick");
@@ -428,14 +424,12 @@ class App {
   startPractice(song) {
     this.currentSong = song;
     
-    // Stop lobby inputs and prep mic/MIDI for practice
     if (this.inputSource === "mic") {
       this.setupMicrophone();
     } else {
       this.setupMidi();
     }
 
-    // Initialize HUD elements
     this.practiceSongTitle.textContent = song.title;
     
     const badgeText = this.practiceMode === "wait" ? "대기 연습 모드" : "템포 연습 모드";
@@ -443,37 +437,39 @@ class App {
     this.practiceModeBadge.textContent = badgeText;
     this.practiceModeBadge.className = badgeClass;
     
-    // UI displays
     this.lobbyView.classList.add("hidden");
     this.practiceView.classList.add("active");
     
-    // Set tempo controls
     this.tempoBPM.value = song.tempo;
     this.bpmVal.textContent = `${song.tempo} BPM`;
-    this.btnPlayPauseTempo.textContent = "▶ 시작 (Space)";
+    
+    // Set play buttons text appropriately
+    this.btnPlayPauseTempo.textContent = this.practiceMode === "wait" ? "▶ 메트로놈 시작 (Space)" : "▶ 연습 시작 (Space)";
     this.btnPlayPauseTempo.className = "btn btn-primary";
 
     // Start practice rendering
     this.sheetController.setMode(this.practiceMode);
     this.sheetController.setBPM(song.tempo);
+    this.sheetController.setMetronomeSound(this.isMetronomeSoundOn);
     this.sheetController.render(song.abc);
   }
 
   stopPractice() {
-    this.sheetController.stopTempoMode();
+    this.sheetController.stopMetronome();
     this.stopMicrophone();
     this.pianoRoll.clearTargets();
     
-    // Empty feedback HUD
     this.targetNoteName.textContent = "준비 중";
     this.targetNoteInfo.textContent = "(키보드 안내를 보세요)";
     this.playedNoteName.textContent = "연주 대기";
     
-    // Transition UI back to lobby
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    }
+    
     this.practiceView.classList.remove("active");
     this.lobbyView.classList.remove("hidden");
     
-    // Trigger mic/MIDI again inside lobby to test levels
     if (this.inputSource === "mic") {
       this.setupMicrophone();
     } else {
@@ -481,15 +477,30 @@ class App {
     }
   }
 
-  toggleTempoMetronome() {
-    if (this.sheetController.isTempoPlaying) {
-      this.sheetController.stopTempoMode();
-      this.btnPlayPauseTempo.textContent = "▶ 시작 (Space)";
+  toggleMetronome() {
+    if (this.sheetController.isMetronomePlaying) {
+      this.sheetController.stopMetronome();
+      this.btnPlayPauseTempo.textContent = this.practiceMode === "wait" ? "▶ 메트로놈 시작 (Space)" : "▶ 연습 시작 (Space)";
       this.btnPlayPauseTempo.className = "btn btn-primary";
     } else {
-      this.btnPlayPauseTempo.textContent = "⏸ 일시정지 (Space)";
+      // Lazy init AudioContext inside virtual keyboard to avoid browser blocking
+      this.pianoRoll.lazyInitAudio();
+      
+      this.sheetController.startMetronome();
+      this.btnPlayPauseTempo.textContent = this.practiceMode === "wait" ? "⏸ 메트로놈 정지 (Space)" : "⏸ 연습 정지 (Space)";
       this.btnPlayPauseTempo.className = "btn btn-secondary";
-      this.sheetController.startTempoMode();
+    }
+  }
+
+  toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.warn("Fullscreen request failed:", err);
+      });
+      this.btnFullscreen.textContent = "📺 창 화면";
+    } else {
+      document.exitFullscreen();
+      this.btnFullscreen.textContent = "🖥️ 전체화면";
     }
   }
 }
