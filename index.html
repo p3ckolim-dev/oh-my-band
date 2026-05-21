@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Antigravity Piano Practice Room 🎹</title>
+  </head>
+  <body>
+    <div class="container">
+      
+      <!-- 헤더 영역 -->
+      <header>
+        <div class="logo-section">
+          <h1>
+            <span class="logo-icon">🎹</span> 
+            Antigravity Piano Practice
+          </h1>
+        </div>
+        
+        <!-- 실시간 입력 감지 상태 표시 -->
+        <div class="status-badge">
+          <div id="status-dot" class="status-dot"></div>
+          <span id="status-text">입력 대기 중</span>
+        </div>
+      </header>
+
+      <!-- 1. LOBBY VIEW: 연습곡 및 설정 선택 화면 -->
+      <div id="lobby-view" class="lobby-view">
+        
+        <!-- 왼쪽: 연습곡 선택 리스트 -->
+        <div class="glass-card songs-card">
+          <div class="panel-title">
+            <span>연습할 곡 선택</span>
+            <span class="text-cyan" style="font-size: 13px;" id="song-count-badge">4 곡 로드됨</span>
+          </div>
+          
+          <div id="songs-list" class="songs-list">
+            <!-- JavaScript에서 동적으로 생성됩니다. -->
+          </div>
+
+          <!-- 커스텀 악보 입력 창 -->
+          <div class="custom-song-box">
+            <div class="panel-title" style="font-size: 14px; margin-top: 12px;">
+              <span>나만의 ABC 악보 추가</span>
+            </div>
+            <textarea id="custom-abc-input" placeholder="여기에 ABC 표기법으로 악보를 붙여넣으세요...&#10;예: X:1&#10;T:비행기&#10;K:C&#10;M:4/4&#10;E D C D | E E E2 | D D D2 | E G G2 |"></textarea>
+            <button id="btn-load-custom" class="btn btn-secondary">
+              ⚡ 커스텀 곡 로드 및 연주
+            </button>
+          </div>
+        </div>
+
+        <!-- 오른쪽: 설정 및 오디오 비주얼라이저 -->
+        <div class="glass-card control-card">
+          <div class="panel-title">연습 설정</div>
+          
+          <!-- 연습 모드 선택 -->
+          <div class="control-group">
+            <span class="control-label">연습 모드</span>
+            <div class="selector-pill" id="mode-selector">
+              <div class="selector-option active" data-mode="wait">대기 연습 (Wait)</div>
+              <div class="selector-option" data-mode="tempo">템포 연습 (Tempo)</div>
+            </div>
+            <p style="font-size: 11px; color: var(--text-secondary); line-height: 1.4;" id="mode-desc">
+              * **대기 연습**: 올바른 건반을 연주할 때까지 악보가 멈추고 기다려줍니다. 초보자에게 완벽합니다.
+            </p>
+          </div>
+
+          <!-- 입력 소스 선택 -->
+          <div class="control-group">
+            <span class="control-label">입력 소스</span>
+            <div class="selector-pill" id="source-selector">
+              <div class="selector-option active" data-source="mic">🎤 마이크 입력</div>
+              <div class="selector-option" data-source="midi">🎹 MIDI 키보드</div>
+            </div>
+          </div>
+
+          <!-- 마이크 환경설정 & 시각화 (마이크 모드일 때만 활성화) -->
+          <div class="control-group" id="mic-config-group">
+            <div class="flex-between">
+              <span class="control-label">마이크 입력 레벨 & 파형</span>
+              <span id="volume-val" class="val-display text-cyan">0%</span>
+            </div>
+            
+            <div class="visualizer-container">
+              <canvas id="mic-visualizer"></canvas>
+            </div>
+            
+            <div class="calib-indicator">
+              <span>입력 문턱값 (데시벨 필터)</span>
+              <div class="volume-bar-outer">
+                <div id="volume-bar" class="volume-bar-inner"></div>
+              </div>
+            </div>
+
+            <div class="slider-container" style="margin-top: 4px;">
+              <span style="font-size: 11px; color: var(--text-secondary);">노이즈 필터 감도:</span>
+              <input type="range" id="mic-sensitivity" min="0" max="100" value="35" />
+              <span id="sensitivity-val" class="val-display">35</span>
+            </div>
+
+            <div class="calib-tips" style="margin-top: 8px;">
+              🎤 <strong>마이크 팁</strong>: 스피커 소리가 마이크로 재입력되지 않도록 <strong>헤드폰</strong>을 착용해 주세요! 조용한 곳에서 연주하면 검출이 훨씬 정확해집니다.
+            </div>
+          </div>
+
+          <!-- MIDI 키보드 상태 (MIDI 모드일 때만 활성화) -->
+          <div class="control-group" id="midi-config-group" style="display: none;">
+            <span class="control-label">연결된 MIDI 장치</span>
+            <div class="calib-tips" id="midi-devices-list" style="background: rgba(0, 240, 255, 0.05); border-color: rgba(0, 240, 255, 0.2);">
+              연결된 MIDI 기기를 찾는 중입니다...
+            </div>
+            <div class="calib-tips" style="margin-top: 8px;">
+              🎹 <strong>MIDI 팁</strong>: USB MIDI 케이블로 건반을 컴퓨터에 연결하면, 마이크 없이 100% 무오류로 연주를 감지합니다!
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 2. PRACTICE VIEW: 악보 및 실제 연습 화면 -->
+      <div id="practice-view" class="practice-view">
+        
+        <!-- 연습 화면 상단 제어바 -->
+        <div class="glass-card practice-header">
+          <button id="btn-back-lobby" class="btn btn-secondary">
+            ⬅ 로비로 돌아가기
+          </button>
+          
+          <div style="text-align: center;">
+            <h2 id="practice-song-title" style="font-size: 20px; font-weight: 700;">반짝반짝 작은 별</h2>
+            <span id="practice-mode-badge" class="difficulty-badge diff-easy" style="margin-top: 4px; display: inline-block;">대기 연습 모드</span>
+          </div>
+
+          <!-- 연습 통계 -->
+          <div class="practice-stats">
+            <div class="stat-box">
+              <span id="stat-accuracy" class="stat-val text-green">100%</span>
+              <span class="stat-label">정확도</span>
+            </div>
+            <div class="stat-box">
+              <span id="stat-progress" class="stat-val text-cyan">0/0</span>
+              <span class="stat-label">진행도</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 실시간 진행도 게이지 -->
+        <div class="progress-container">
+          <div id="practice-progress-bar" class="progress-bar"></div>
+        </div>
+
+        <!-- 템포 제어판 (Tempo 연습 모드일 때만 활성화) -->
+        <div class="glass-card tempo-practice-control" id="tempo-control-panel" style="display: none;">
+          <div class="metronome-light" id="metro-light"></div>
+          <div class="control-group" style="flex-grow: 1; gap: 4px;">
+            <div class="flex-between">
+              <span class="control-label" style="font-size: 12px;">템포 조절 (Metronome BPM)</span>
+              <span id="bpm-val" class="val-display text-orange" style="font-size: 14px; font-weight: 700;">80 BPM</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" id="tempo-bpm" min="40" max="200" value="80" />
+            </div>
+          </div>
+          <button id="btn-play-pause-tempo" class="btn btn-primary" style="min-width: 100px;">
+            ▶ 시작 (Space)
+          </button>
+        </div>
+
+        <!-- 실시간 피드백 및 타겟 음 안내바 -->
+        <div class="feedback-bar">
+          <div class="feedback-left">
+            <span>🎯 다음에 칠 음:</span>
+            <span id="target-note-name" class="target-note-label">준비 중</span>
+            <span id="target-note-info" style="color: var(--text-secondary); font-size: 12px;">(키보드 안내를 보세요)</span>
+          </div>
+          <div class="feedback-right">
+            <span>🎹 현재 연주한 음:</span>
+            <span id="played-note-name" class="played-note-label">연주 대기</span>
+          </div>
+        </div>
+
+        <!-- 악보 카드 -->
+        <div class="glass-card sheet-music-card">
+          <div id="sheet-music-container">
+            <!-- abcjs 악보가 여기에 동적으로 SVG 렌더링됩니다. -->
+          </div>
+        </div>
+
+        <!-- 가상 피아노 건반 카드 -->
+        <div class="glass-card piano-roll-card">
+          <div class="panel-title" style="margin-bottom: 12px; font-size: 14px;">
+            <span>가상 피아노 키보드 가이드</span>
+            <span style="font-size: 12px; color: var(--text-secondary);">주황색: 연주할 건반 | 하늘색: 마이크/MIDI 입력 감지</span>
+          </div>
+          
+          <!-- 건반 영역 C3(MIDI 48) ~ C6(MIDI 84) -->
+          <div id="piano-keys-container" class="piano-keys-container">
+            <!-- javascript에서 건반들을 자동으로 렌더링합니다. -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- main.js 스크립트 연결 -->
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
