@@ -294,7 +294,9 @@ export class SheetMusicController {
             const relativeLeft = noteRect.left - cardRect.left + card.scrollLeft;
             const relativeTop = noteRect.top - cardRect.top + card.scrollTop;
             
-            this.cursorEl.style.left = `${relativeLeft + noteRect.width / 2 - 2}px`;
+            const cursorWidth = this.cursorEl.offsetWidth || 40;
+            
+            this.cursorEl.style.left = `${relativeLeft + noteRect.width / 2 - (cursorWidth / 2)}px`;
             this.cursorEl.style.top = `${relativeTop - 5}px`;
             this.cursorEl.style.height = `${noteRect.height + 10}px`;
             this.cursorEl.classList.add("active");
