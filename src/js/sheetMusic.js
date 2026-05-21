@@ -71,12 +71,19 @@ export class SheetMusicController {
       this.cursorEl.classList.remove("active");
     }
 
+    const container = document.getElementById(this.containerId);
+    let staffWidth = 800;
+    if (container) {
+      staffWidth = Math.max(container.clientWidth, 800);
+    }
+
     this.visualObj = abcjs.renderAbc(this.containerId, this.abcString, {
       responsive: "resize",
       add_classes: true,
       scale: 1.1,
       paddingright: 15,
       paddingleft: 15,
+      staffwidth: staffWidth,
       timeBasedLayout: {
         minPadding: 10,
         minWidth: 15,

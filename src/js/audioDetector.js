@@ -29,6 +29,11 @@ export class AudioDetector {
   async start() {
     if (this.isListening) return;
     
+    // Create AudioContext first, within the synchronous user gesture context
+    if (!this.audioCtx) {
+      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -38,12 +43,16 @@ export class AudioDetector {
         }
       });
       
-      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       this.analyser = this.audioCtx.createAnalyser();
       this.analyser.fftSize = this.bufferSize;
       
       this.source = this.audioCtx.createMediaStreamSource(this.stream);
       this.source.connect(this.analyser);
+      
+      // Ensure context is running (comply with modern browser policies)
+      if (this.audioCtx.state === "suspended") {
+        await this.audioCtx.resume();
+      }
       
       this.isListening = true;
       this.lastDetectedNote = -1;
