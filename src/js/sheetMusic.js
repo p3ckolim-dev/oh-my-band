@@ -258,7 +258,7 @@ export class SheetMusicController {
   }
 
   // Highlight active note and advance SVG class styling
-  highlightTargetNote() {
+  highlightTargetNote(durationMs = 0) {
     const svgNotes = document.querySelectorAll(`#${this.containerId} .abcjs-note`);
     svgNotes.forEach(el => {
       el.classList.remove("abcjs-target");
@@ -294,7 +294,15 @@ export class SheetMusicController {
             const relativeLeft = noteRect.left - cardRect.left + card.scrollLeft;
             const relativeTop = noteRect.top - cardRect.top + card.scrollTop;
             
-            const cursorWidth = this.cursorEl.offsetWidth || 40;
+            // Apply dynamic linear transition matching note play duration for sweeping movement
+            if (durationMs && durationMs > 0) {
+              this.cursorEl.style.transition = `left ${durationMs}ms linear, top 0.3s ease-out, height 0.3s ease-out, opacity 0.25s ease`;
+            } else {
+              // Fast snappy transitions for Wait practice mode
+              this.cursorEl.style.transition = `left 0.15s ease-out, top 0.25s ease-out, height 0.25s ease-out, opacity 0.2s ease`;
+            }
+
+            const cursorWidth = this.cursorEl.offsetWidth || 36;
             
             this.cursorEl.style.left = `${relativeLeft + noteRect.width / 2 - (cursorWidth / 2)}px`;
             this.cursorEl.style.top = `${relativeTop - 5}px`;
@@ -478,7 +486,15 @@ export class SheetMusicController {
       
       this.currentIndex++;
       this.updateStats();
-      this.highlightTargetNote();
+      
+      // Pass the next note's duration to make the playhead cursor slide smoothly without stopping
+      if (this.currentIndex < this.notes.length) {
+        const nextNote = this.notes[this.currentIndex];
+        const nextDurationMs = (nextNote.duration * 4 * 60000) / this.tempoBPM;
+        this.highlightTargetNote(nextDurationMs);
+      } else {
+        this.highlightTargetNote();
+      }
       
       this.tempoModeMetronomeStep();
     }, durationMs);
@@ -548,7 +564,16 @@ export class SheetMusicController {
     this.tempoTimer = setTimeout(() => {
       this.currentIndex++;
       this.updateStats();
-      this.highlightTargetNote();
+      
+      // Pass the next note's duration to make the playhead cursor slide smoothly without stopping
+      if (this.currentIndex < this.notes.length) {
+        const nextNote = this.notes[this.currentIndex];
+        const nextDurationMs = (nextNote.duration * 4 * 60000) / this.tempoBPM;
+        this.highlightTargetNote(nextDurationMs);
+      } else {
+        this.highlightTargetNote();
+      }
+      
       this.demoPlayStep();
     }, durationMs);
   }
