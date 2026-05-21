@@ -71,13 +71,17 @@ export class SheetMusicController {
       this.cursorEl.classList.remove("active");
     }
 
-    // Render music score as SVG
     this.visualObj = abcjs.renderAbc(this.containerId, this.abcString, {
       responsive: "resize",
       add_classes: true,
       scale: 1.1,
       paddingright: 15,
-      paddingleft: 15
+      paddingleft: 15,
+      timeBasedLayout: {
+        minPadding: 10,
+        minWidth: 15,
+        align: 'left'
+      }
     });
 
     // Parse the actual notes inside the generated tune object
@@ -290,23 +294,72 @@ export class SheetMusicController {
             const noteRect = svgNote.getBoundingClientRect();
             const cardRect = card.getBoundingClientRect();
             
-            // Calculate relative coordinates
+            // Calculate current relative coordinates
             const relativeLeft = noteRect.left - cardRect.left + card.scrollLeft;
             const relativeTop = noteRect.top - cardRect.top + card.scrollTop;
-            
-            // Apply dynamic linear transition matching note play duration for sweeping movement
-            if (durationMs && durationMs > 0) {
-              this.cursorEl.style.transition = `left ${durationMs}ms linear, top 0.3s ease-out, height 0.3s ease-out, opacity 0.25s ease`;
-            } else {
-              // Fast snappy transitions for Wait practice mode
-              this.cursorEl.style.transition = `left 0.15s ease-out, top 0.25s ease-out, height 0.25s ease-out, opacity 0.2s ease`;
-            }
-
             const cursorWidth = this.cursorEl.offsetWidth || 36;
             
-            this.cursorEl.style.left = `${relativeLeft + noteRect.width / 2 - (cursorWidth / 2)}px`;
-            this.cursorEl.style.top = `${relativeTop - 5}px`;
-            this.cursorEl.style.height = `${noteRect.height + 10}px`;
+            const currX = relativeLeft + noteRect.width / 2 - (cursorWidth / 2);
+            const currY = relativeTop - 5;
+            const currHeight = noteRect.height + 10;
+            
+            if (durationMs && durationMs > 0 && (this.mode === "tempo" || this.isDemoPlaying)) {
+              // --- LOOK-AHEAD playhead transition for Tempo/Autoplay mode ---
+              let destX = currX;
+              let destY = currY;
+              let destHeight = currHeight;
+              
+              const nextIndex = this.currentIndex + 1;
+              if (nextIndex < this.notes.length && svgNotes[nextIndex]) {
+                const nextSvgNote = svgNotes[nextIndex];
+                const nextNoteRect = nextSvgNote.getBoundingClientRect();
+                
+                const nextRelativeLeft = nextNoteRect.left - cardRect.left + card.scrollLeft;
+                const nextRelativeTop = nextNoteRect.top - cardRect.top + card.scrollTop;
+                
+                const nextX = nextRelativeLeft + nextNoteRect.width / 2 - (cursorWidth / 2);
+                const nextY = nextRelativeTop - 5;
+                const nextHeight = nextNoteRect.height + 10;
+                
+                // Check if the next note is on the same staff line (system)
+                // If on a different line, sweep horizontally to the right on the current line,
+                // and snap to the next line at the start of the next note.
+                if (Math.abs(nextY - currY) < 30) {
+                  destX = nextX;
+                  destY = nextY;
+                  destHeight = nextHeight;
+                } else {
+                  // Different staff line: sweep to the right of the current note
+                  destX = currX + 60;
+                }
+              } else {
+                // Last note: sweep a bit to the right to complete the beat
+                destX = currX + 60;
+              }
+              
+              // Force CSS transition reflow sequence:
+              // 1. Temporarily disable transitions
+              this.cursorEl.style.transition = 'none';
+              // 2. Set position instantly to the START of the current note (currX)
+              this.cursorEl.style.left = `${currX}px`;
+              this.cursorEl.style.top = `${currY}px`;
+              this.cursorEl.style.height = `${currHeight}px`;
+              // 3. Force reflow to flush instant position styles
+              this.cursorEl.offsetHeight; 
+              // 4. Enable linear transition matching note duration
+              this.cursorEl.style.transition = `left ${durationMs}ms linear, top 0.3s ease-out, height 0.3s ease-out, opacity 0.25s ease`;
+              // 5. Set target position to destination (destX)
+              this.cursorEl.style.left = `${destX}px`;
+              this.cursorEl.style.top = `${destY}px`;
+              this.cursorEl.style.height = `${destHeight}px`;
+            } else {
+              // --- snappy transition for Wait practice mode ---
+              this.cursorEl.style.transition = `left 0.15s ease-out, top 0.25s ease-out, height 0.25s ease-out, opacity 0.2s ease`;
+              this.cursorEl.style.left = `${currX}px`;
+              this.cursorEl.style.top = `${currY}px`;
+              this.cursorEl.style.height = `${currHeight}px`;
+            }
+            
             this.cursorEl.classList.add("active");
           }
         }
@@ -405,7 +458,10 @@ export class SheetMusicController {
       this.correctNotesPlayed = 0;
       this.accuracy = 100;
       this.updateStats();
-      this.highlightTargetNote();
+      
+      const targetNote = this.notes[0];
+      const durationMs = targetNote ? (targetNote.duration * 4 * 60000) / this.tempoBPM : 0;
+      this.highlightTargetNote(durationMs);
       
       this.isTempoPlaying = true;
       this.tempoModeMetronomeStep();
@@ -512,7 +568,10 @@ export class SheetMusicController {
     this.accuracy = 100;
     
     this.updateStats();
-    this.highlightTargetNote();
+    
+    const targetNote = this.notes[0];
+    const durationMs = targetNote ? (targetNote.duration * 4 * 60000) / this.tempoBPM : 0;
+    this.highlightTargetNote(durationMs);
     
     this.demoPlayStep();
   }
