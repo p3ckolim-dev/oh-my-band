@@ -5,7 +5,7 @@
     <link rel="icon" type="image/svg+xml" href="/letspiano/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Antigravity Piano Practice Room 🎹</title>
-    <script type="module" crossorigin src="/letspiano/assets/index-DoR6UcG9.js"></script>
+    <script type="module" crossorigin src="/letspiano/assets/index-nAu5CF9J.js"></script>
     <link rel="stylesheet" crossorigin href="/letspiano/assets/index-inKAsuhQ.css">
   </head>
   <body>
@@ -126,9 +126,14 @@
         
         <!-- 연습 화면 상단 제어바 -->
         <div class="glass-card practice-header">
-          <button id="btn-back-lobby" class="btn btn-secondary">
-            ⬅ 로비로 돌아가기
-          </button>
+          <div class="flex-row">
+            <button id="btn-back-lobby" class="btn btn-secondary">
+              ⬅ 로비로 돌아가기
+            </button>
+            <button id="btn-fullscreen" class="btn btn-secondary">
+              🖥️ 전체화면
+            </button>
+          </div>
           
           <div style="text-align: center;">
             <h2 id="practice-song-title" style="font-size: 20px; font-weight: 700;">반짝반짝 작은 별</h2>
@@ -153,8 +158,8 @@
           <div id="practice-progress-bar" class="progress-bar"></div>
         </div>
 
-        <!-- 템포 제어판 (Tempo 연습 모드일 때만 활성화) -->
-        <div class="glass-card tempo-practice-control" id="tempo-control-panel" style="display: none;">
+        <!-- 템포 및 메트로놈 제어판 (모든 모드에서 작동) -->
+        <div class="glass-card tempo-practice-control" id="tempo-control-panel">
           <div class="metronome-light" id="metro-light"></div>
           <div class="control-group" style="flex-grow: 1; gap: 4px;">
             <div class="flex-between">
@@ -165,8 +170,11 @@
               <input type="range" id="tempo-bpm" min="40" max="200" value="80" />
             </div>
           </div>
-          <button id="btn-play-pause-tempo" class="btn btn-primary" style="min-width: 100px;">
-            ▶ 시작 (Space)
+          <button id="btn-metronome-sound-toggle" class="btn btn-secondary" style="min-width: 120px;">
+            🔊 소리: 켜짐
+          </button>
+          <button id="btn-play-pause-tempo" class="btn btn-primary" style="min-width: 130px;">
+            ▶ 메트로놈 시작 (Space)
           </button>
         </div>
 
