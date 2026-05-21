@@ -466,8 +466,8 @@ export class SheetMusicController {
     this.noteWindowPlayed = false;
     this.notesPlayed++; // missed is counted
 
-    // Beat length timing window
-    const durationMs = (targetNote.duration * 60000) / this.tempoBPM;
+    // Beat length timing window (multiply by 4 to map whole notes back to standard quarter note beats)
+    const durationMs = (targetNote.duration * 4 * 60000) / this.tempoBPM;
     
     this.tempoTimer = setTimeout(() => {
       if (!this.noteWindowPlayed) {
@@ -533,7 +533,8 @@ export class SheetMusicController {
       this.onMetronomeTick(this.currentIndex);
     }
     
-    const durationMs = (targetNote.duration * 60000) / this.tempoBPM;
+    // Beat length timing window (multiply by 4 to map whole notes back to standard quarter note beats)
+    const durationMs = (targetNote.duration * 4 * 60000) / this.tempoBPM;
 
     // Trigger demo play callback to main.js for virtual piano rolls
     if (this.onDemoPlayNote) {
