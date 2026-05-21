@@ -1,4 +1,4 @@
-// Antigravity Piano Practice Room - Main UI Orchestrator
+// Let's Piano - Main UI Orchestrator
 import '../src/css/main.css'; // Vite css imports
 import { PRESET_SONGS, validateAndFormatABC } from './js/songs.js';
 import { PianoRoll } from './js/pianoRoll.js';
