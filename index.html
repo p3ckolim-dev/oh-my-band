@@ -5,8 +5,8 @@
     <link rel="icon" type="image/svg+xml" href="/letspiano/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Oh My Piano 🎹</title>
-    <script type="module" crossorigin src="/letspiano/assets/index-CPUdPpMS.js"></script>
-    <link rel="stylesheet" crossorigin href="/letspiano/assets/index-DIS4R447.css">
+    <script type="module" crossorigin src="/letspiano/assets/index-CL9akwm0.js"></script>
+    <link rel="stylesheet" crossorigin href="/letspiano/assets/index-B3ES_cpj.css">
   </head>
   <body>
     <div class="container">
@@ -16,15 +16,27 @@
         <div class="logo-section">
           <h1>
             <span class="logo-icon">🎹</span> 
-            <span>Oh My Piano</span>
-            <span class="version-chip">v202605220004</span>
+            <span class="logo-text">Oh My Piano</span>
+            <span id="header-version" class="version-chip">v202605220005</span>
+            <span id="header-mode-badge" class="mode-chip" style="display: none;">대기 연습</span>
+            <span id="header-song-title" class="song-chip" style="display: none;">반짝반짝 작은 별</span>
           </h1>
         </div>
         
-        <!-- 실시간 입력 감지 상태 표시 -->
-        <div class="status-badge">
-          <div id="status-dot" class="status-dot"></div>
-          <span id="status-text">입력 대기 중</span>
+        <!-- 우측 액션 영역: 실시간 상태, 테마 토글, 전체화면 -->
+        <div class="header-actions">
+          <div id="mic-status-badge" class="status-badge">
+            <div id="status-dot" class="status-dot"></div>
+            <span id="status-text">입력 대기 중</span>
+          </div>
+          
+          <button id="btn-theme-toggle" class="btn-header-action" title="테마 변경">
+            <span class="theme-toggle-icon">🌙</span>
+          </button>
+          
+          <button id="btn-header-fullscreen" class="btn-header-action" title="전체화면">
+            <span class="fullscreen-icon">🖥️</span>
+          </button>
         </div>
       </header>
 
@@ -125,61 +137,35 @@
       <!-- 2. PRACTICE VIEW: 악보 및 실제 연습 화면 -->
       <div id="practice-view" class="practice-view">
         
-        <!-- 연습 화면 상단 제어바 -->
-        <div class="glass-card practice-header">
-          <div class="flex-row">
-            <button id="btn-back-lobby" class="btn btn-secondary">
-              ⬅ 로비로 돌아가기
-            </button>
-            <button id="btn-fullscreen" class="btn btn-secondary">
-              🖥️ 전체화면
-            </button>
-          </div>
+        <!-- 통합 연습 제어바 -->
+        <div class="glass-card practice-control-bar" id="tempo-control-panel">
+          <button id="btn-back-lobby" class="btn btn-secondary">
+            ⬅ 로비
+          </button>
           
-          <div style="text-align: center;">
-            <h2 id="practice-song-title" style="font-size: 20px; font-weight: 700;">반짝반짝 작은 별</h2>
-            <span id="practice-mode-badge" class="difficulty-badge diff-easy" style="margin-top: 4px; display: inline-block;">대기 연습 모드</span>
+          <!-- 메트로놈 제어 그룹 -->
+          <div class="metronome-control-group">
+            <div class="metronome-light-container">
+              <div class="metronome-light" id="metro-light"></div>
+            </div>
+            <div class="bpm-slider-container">
+              <span id="bpm-val" class="bpm-display text-orange">80 BPM</span>
+              <input type="range" id="tempo-bpm" min="40" max="200" value="80" class="tempo-slider" />
+            </div>
+            <button id="btn-metronome-sound-toggle" class="btn-icon-toggle" title="메트로놈 소리 켜기/끄기">
+              🔊
+            </button>
           </div>
 
-          <!-- 연습 통계 -->
-          <div class="practice-stats">
-            <div class="stat-box">
-              <span id="stat-accuracy" class="stat-val text-green">100%</span>
-              <span class="stat-label">정확도</span>
-            </div>
-            <div class="stat-box">
-              <span id="stat-progress" class="stat-val text-cyan">0/0</span>
-              <span class="stat-label">진행도</span>
-            </div>
+          <!-- 실행 제어 그룹 -->
+          <div class="practice-action-group">
+            <button id="btn-demo-autoplay" class="btn btn-secondary btn-autoplay" style="color: var(--accent-cyan); border-color: var(--accent-cyan);">
+              ▶ 자동 연주
+            </button>
+            <button id="btn-play-pause-tempo" class="btn btn-primary btn-play">
+              ▶ 연습 시작 (Space)
+            </button>
           </div>
-        </div>
-
-        <!-- 실시간 진행도 게이지 -->
-        <div class="progress-container">
-          <div id="practice-progress-bar" class="progress-bar"></div>
-        </div>
-
-        <!-- 템포 및 메트로놈 제어판 (모든 모드에서 작동) -->
-        <div class="glass-card tempo-practice-control" id="tempo-control-panel">
-          <div class="metronome-light" id="metro-light"></div>
-          <div class="control-group" style="flex-grow: 1; gap: 4px;">
-            <div class="flex-between">
-              <span class="control-label" style="font-size: 12px;">템포 조절 (Metronome BPM)</span>
-              <span id="bpm-val" class="val-display text-orange" style="font-size: 14px; font-weight: 700;">80 BPM</span>
-            </div>
-            <div class="slider-container">
-              <input type="range" id="tempo-bpm" min="40" max="200" value="80" />
-            </div>
-          </div>
-          <button id="btn-metronome-sound-toggle" class="btn btn-secondary" style="min-width: 100px;">
-            🔊 소리: 켜짐
-          </button>
-          <button id="btn-demo-autoplay" class="btn btn-secondary" style="min-width: 140px; border-color: var(--accent-cyan); color: var(--accent-cyan);">
-            ▶ 악보 자동 연주
-          </button>
-          <button id="btn-play-pause-tempo" class="btn btn-primary" style="min-width: 130px;">
-            ▶ 연습 시작 (Space)
-          </button>
         </div>
 
         <!-- 실시간 피드백 및 타겟 음 안내바 -->
@@ -195,12 +181,32 @@
           </div>
         </div>
 
-        <!-- 악보 카드 -->
-        <div class="glass-card sheet-music-card" style="position: relative;">
-          <!-- 템포 재생 중 흘러가는 세로막대 커서선 -->
-          <div id="playback-cursor" class="playback-cursor"></div>
-          <div id="sheet-music-container">
-            <!-- abcjs 악보가 여기에 동적으로 SVG 렌더링됩니다. -->
+        <!-- 악보 카드 (경계선 HUD를 가진 래퍼) -->
+        <div class="sheet-music-outer">
+          <!-- 경계 밀착형 프로그레스 바 -->
+          <div class="boundary-progress-container">
+            <div id="practice-progress-bar" class="boundary-progress-bar"></div>
+          </div>
+          
+          <!-- 경계선 HUD 배지 -->
+          <div class="sheet-music-boundary-hud">
+            <div class="boundary-badge accuracy-badge">
+              <span class="label">정확도</span>
+              <span id="stat-accuracy" class="value text-green">100%</span>
+            </div>
+            <div class="boundary-badge progress-badge">
+              <span class="label">진행도</span>
+              <span id="stat-progress" class="value text-cyan">0/0</span>
+            </div>
+          </div>
+
+          <!-- 실제 악보 카드 -->
+          <div class="glass-card sheet-music-card">
+            <!-- 템포 재생 중 흘러가는 세로막대 커서선 -->
+            <div id="playback-cursor" class="playback-cursor"></div>
+            <div id="sheet-music-container">
+              <!-- abcjs 악보가 여기에 동적으로 SVG 렌더링됩니다. -->
+            </div>
           </div>
         </div>
 
