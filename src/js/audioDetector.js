@@ -51,7 +51,11 @@ export class AudioDetector {
       
       // Ensure context is running (comply with modern browser policies)
       if (this.audioCtx.state === "suspended") {
-        await this.audioCtx.resume();
+        try {
+          await this.audioCtx.resume();
+        } catch (resumeErr) {
+          console.warn("AudioContext resume deferred until user interaction:", resumeErr);
+        }
       }
       
       this.isListening = true;

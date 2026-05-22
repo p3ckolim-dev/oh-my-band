@@ -338,13 +338,25 @@ class App {
       this.statusText.textContent = "마이크 듣는 중 (소리를 내보세요)";
       this.visualizer.start(this.audioDetector.analyser);
     } catch (e) {
-      this.micPermissionDenied = true; // Mark as denied to prevent automatic loops
-      this.statusDot.className = "status-dot";
-      this.statusText.textContent = "마이크 권한 거부됨";
+      console.warn("setupMicrophone failed:", e);
+      const isRealDenial = e.name === "NotAllowedError" || e.name === "PermissionDeniedError" || (e.message && e.message.includes("Permission"));
+      
+      if (isRealDenial) {
+        this.micPermissionDenied = true; // Only block auto-retries for actual permission denials
+        this.statusDot.className = "status-dot";
+        this.statusText.textContent = "마이크 권한 거부됨";
+      } else {
+        this.statusDot.className = "status-dot";
+        this.statusText.textContent = "마이크 초기화 실패";
+      }
       
       // Only prompt blocker alert if user manually triggered it
       if (isManual) {
-        alert("마이크 입력 권한이 필요합니다. 설정에서 마이크를 허용해 주세요!");
+        if (isRealDenial) {
+          alert("마이크 입력 권한이 필요합니다. 설정에서 마이크를 허용해 주세요!");
+        } else {
+          alert("마이크를 시작할 수 없습니다. 다른 탭이나 앱에서 마이크를 사용 중인지 확인해 주세요.");
+        }
       }
     }
   }
