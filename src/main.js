@@ -13,6 +13,7 @@ class App {
     this.inputSource = "mic"; // 'mic' or 'midi'
     this.practiceMode = "wait"; // 'wait' or 'tempo'
     this.isMetronomeSoundOn = true;
+    this.micPermissionDenied = false; // Track mic permission state to prevent loops
     
     // Components
     this.pianoRoll = null;
@@ -30,6 +31,15 @@ class App {
 
   init() {
     this.cacheElements();
+
+    // Initialize Theme
+    this.isLightTheme = localStorage.getItem("theme") === "light";
+    if (this.isLightTheme) {
+      document.body.classList.add("light-theme");
+      const themeIcon = this.btnThemeToggle.querySelector(".theme-toggle-icon");
+      if (themeIcon) themeIcon.textContent = "☀️";
+    }
+
     this.initViews();
     this.bindEvents();
     this.loadPresetSongsList();
@@ -64,9 +74,14 @@ class App {
     this.lobbyView = document.getElementById("lobby-view");
     this.practiceView = document.getElementById("practice-view");
     
-    // Header status
+    // Header elements
     this.statusDot = document.getElementById("status-dot");
     this.statusText = document.getElementById("status-text");
+    this.headerVersion = document.getElementById("header-version");
+    this.headerSongTitle = document.getElementById("header-song-title");
+    this.headerModeBadge = document.getElementById("header-mode-badge");
+    this.btnThemeToggle = document.getElementById("btn-theme-toggle");
+    this.logoHomeTrigger = document.getElementById("logo-home-trigger");
     
     // Forms & Controls
     this.songsListContainer = document.getElementById("songs-list");
@@ -86,9 +101,9 @@ class App {
     
     // Practice arena HUD details
     this.btnBackLobby = document.getElementById("btn-back-lobby");
-    this.btnFullscreen = document.getElementById("btn-fullscreen");
-    this.practiceSongTitle = document.getElementById("practice-song-title");
-    this.practiceModeBadge = document.getElementById("practice-mode-badge");
+    this.btnFullscreen = document.getElementById("btn-header-fullscreen");
+    this.practiceSongTitle = document.getElementById("header-song-title");
+    this.practiceModeBadge = document.getElementById("header-mode-badge");
     this.statAccuracy = document.getElementById("stat-accuracy");
     this.statProgress = document.getElementById("stat-progress");
     this.progressBar = document.getElementById("practice-progress-bar");
@@ -151,7 +166,7 @@ class App {
         this.micConfigGroup.style.display = "flex";
         this.midiConfigGroup.style.display = "none";
         this.visualizer.setGlowColor("mic");
-        this.setupMicrophone();
+        this.setupMicrophone(true); // User explicitly clicked, count as manual intent
       } else {
         this.micConfigGroup.style.display = "none";
         this.midiConfigGroup.style.display = "flex";
@@ -190,6 +205,30 @@ class App {
       }
     });
 
+    // Theme Toggle
+    this.btnThemeToggle.addEventListener("click", () => {
+      this.isLightTheme = !this.isLightTheme;
+      const themeIcon = this.btnThemeToggle.querySelector(".theme-toggle-icon");
+      if (this.isLightTheme) {
+        document.body.classList.add("light-theme");
+        if (themeIcon) themeIcon.textContent = "☀️";
+        localStorage.setItem("theme", "light");
+      } else {
+        document.body.classList.remove("light-theme");
+        if (themeIcon) themeIcon.textContent = "🌙";
+        localStorage.setItem("theme", "dark");
+      }
+    });
+
+    // Logo click goes back to lobby (home)
+    if (this.logoHomeTrigger) {
+      this.logoHomeTrigger.addEventListener("click", () => {
+        if (this.practiceView.classList.contains("active")) {
+          this.stopPractice();
+        }
+      });
+    }
+
     // Back to lobby
     this.btnBackLobby.addEventListener("click", () => {
       this.stopPractice();
@@ -202,10 +241,13 @@ class App {
 
     // Detect escaping fullscreen to sync button label
     document.addEventListener("fullscreenchange", () => {
+      const icon = this.btnFullscreen.querySelector(".fullscreen-icon");
       if (document.fullscreenElement) {
-        this.btnFullscreen.textContent = "📺 창 화면";
+        if (icon) icon.textContent = "📺";
+        this.btnFullscreen.title = "창 화면";
       } else {
-        this.btnFullscreen.textContent = "🖥️ 전체화면";
+        if (icon) icon.textContent = "🖥️";
+        this.btnFullscreen.title = "전체화면";
       }
     });
 
@@ -220,8 +262,8 @@ class App {
     this.btnMetronomeSoundToggle.addEventListener("click", () => {
       this.isMetronomeSoundOn = !this.isMetronomeSoundOn;
       this.sheetController.setMetronomeSound(this.isMetronomeSoundOn);
-      this.btnMetronomeSoundToggle.textContent = this.isMetronomeSoundOn ? "🔊 소리: 켜짐" : "🔇 소리: 꺼짐";
-      this.btnMetronomeSoundToggle.className = this.isMetronomeSoundOn ? "btn btn-secondary" : "btn btn-secondary text-muted";
+      this.btnMetronomeSoundToggle.textContent = this.isMetronomeSoundOn ? "🔊" : "🔇";
+      this.btnMetronomeSoundToggle.className = this.isMetronomeSoundOn ? "btn-icon-toggle" : "btn-icon-toggle muted";
     });
 
     // Demo auto play toggle in practice
@@ -269,7 +311,14 @@ class App {
 
   // --- Input Setup & Control ---
 
-  async setupMicrophone() {
+  async setupMicrophone(isManual = false) {
+    // If permission was already denied, skip background auto-reconnects to prevent loop
+    if (this.micPermissionDenied && !isManual) {
+      this.statusDot.className = "status-dot";
+      this.statusText.textContent = "마이크 권한 거부됨";
+      return;
+    }
+
     this.statusText.textContent = "마이크 사용 승인 요청 중...";
     this.midiInterface.stop();
     
@@ -284,13 +333,19 @@ class App {
 
     try {
       await this.audioDetector.start();
+      this.micPermissionDenied = false; // Reset on success
       this.statusDot.className = "status-dot listening";
       this.statusText.textContent = "마이크 듣는 중 (소리를 내보세요)";
       this.visualizer.start(this.audioDetector.analyser);
     } catch (e) {
+      this.micPermissionDenied = true; // Mark as denied to prevent automatic loops
       this.statusDot.className = "status-dot";
       this.statusText.textContent = "마이크 권한 거부됨";
-      alert("마이크 입력 권한이 필요합니다. 설정에서 마이크를 허용해 주세요!");
+      
+      // Only prompt blocker alert if user manually triggered it
+      if (isManual) {
+        alert("마이크 입력 권한이 필요합니다. 설정에서 마이크를 허용해 주세요!");
+      }
     }
   }
 
@@ -438,22 +493,27 @@ class App {
   }
 
   // --- Practice Session Transitions ---
-
+ 
   startPractice(song) {
     this.currentSong = song;
     
     if (this.inputSource === "mic") {
-      this.setupMicrophone();
+      this.setupMicrophone(false); // Automated/silent retry on song start
     } else {
       this.setupMidi();
     }
 
     this.practiceSongTitle.textContent = song.title;
     
-    const badgeText = this.practiceMode === "wait" ? "대기 연습 모드" : "템포 연습 모드";
-    const badgeClass = this.practiceMode === "wait" ? "difficulty-badge diff-easy" : "difficulty-badge diff-medium";
+    const badgeText = this.practiceMode === "wait" ? "대기 연습" : "템포 연습";
+    const badgeClass = this.practiceMode === "wait" ? "mode-chip wait" : "mode-chip tempo";
     this.practiceModeBadge.textContent = badgeText;
     this.practiceModeBadge.className = badgeClass;
+    
+    // Toggle header mode/song visibility
+    if (this.headerVersion) this.headerVersion.style.display = "none";
+    if (this.practiceSongTitle) this.practiceSongTitle.style.display = "inline-block";
+    if (this.practiceModeBadge) this.practiceModeBadge.style.display = "inline-block";
     
     this.lobbyView.classList.add("hidden");
     this.practiceView.classList.add("active");
@@ -493,11 +553,16 @@ class App {
       document.exitFullscreen();
     }
     
+    // Toggle header mode/song visibility back to lobby
+    if (this.headerVersion) this.headerVersion.style.display = "inline-block";
+    if (this.practiceSongTitle) this.practiceSongTitle.style.display = "none";
+    if (this.practiceModeBadge) this.practiceModeBadge.style.display = "none";
+    
     this.practiceView.classList.remove("active");
     this.lobbyView.classList.remove("hidden");
     
     if (this.inputSource === "mic") {
-      this.setupMicrophone();
+      this.setupMicrophone(false); // Silent check when returning to lobby
     } else {
       this.setupMidi();
     }
@@ -523,14 +588,17 @@ class App {
   }
 
   toggleFullscreen() {
+    const icon = this.btnFullscreen.querySelector(".fullscreen-icon");
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(err => {
         console.warn("Fullscreen request failed:", err);
       });
-      this.btnFullscreen.textContent = "📺 창 화면";
+      if (icon) icon.textContent = "📺";
+      this.btnFullscreen.title = "창 화면";
     } else {
       document.exitFullscreen();
-      this.btnFullscreen.textContent = "🖥️ 전체화면";
+      if (icon) icon.textContent = "🖥️";
+      this.btnFullscreen.title = "전체화면";
     }
   }
 
