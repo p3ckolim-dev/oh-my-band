@@ -72,20 +72,20 @@ E G G E | F A A2 | G C D E | D2 C2 |`
   },
   {
     id: "summer",
-    title: "Summer (2002 'ENCORE' 피아노 솔로 버전)",
+    title: "Summer (경쾌한 메인 테마)",
     composer: "히사이시 조 (Joe Hisaishi)",
     difficulty: "medium",
     tempo: 115,
     abc: `X:5
-T:Summer (2002 'ENCORE')
+T:Summer (Rhythmic Theme)
 C:Joe Hisaishi
 M:4/4
 L:1/4
 Q:1/4=115
 K:C
-G A c d | g e d c | G A c d | g e d2 |
-E F G c | A G E D | C D E G | E D C D |
-E F G c | A G E D | C D E G | C2 c2 |`
+G/2A/2 c d | g e3/2 d/2 c | G/2A/2 c d | g e d2 |
+E/2F/2 G c | A G3/2 E/2 D | C D E G | E3/2 D/2 C D |
+E/2F/2 G c | A G3/2 E/2 D | C D E G | C2 c2 |`
   }
 ];
 
