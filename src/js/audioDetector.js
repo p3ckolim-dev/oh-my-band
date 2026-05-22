@@ -29,8 +29,8 @@ export class AudioDetector {
   async start() {
     if (this.isListening) return;
     
-    // Create AudioContext first, within the synchronous user gesture context
-    if (!this.audioCtx) {
+    // Reuse AudioContext if it exists, or create only if null/closed
+    if (!this.audioCtx || this.audioCtx.state === "closed") {
       this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
     
@@ -71,16 +71,25 @@ export class AudioDetector {
     }
   }
 
-  stop() {
+  async stop() {
     this.isListening = false;
+    
+    // Stop tracks to release mic hardware immediately
     if (this.stream) {
       this.stream.getTracks().forEach(track => track.stop());
       this.stream = null;
     }
-    if (this.audioCtx) {
-      this.audioCtx.close();
-      this.audioCtx = null;
+    
+    // DO NOT close AudioContext to prevent exceeding tab limits on Chromium.
+    // Suspend it instead to save CPU power.
+    if (this.audioCtx && this.audioCtx.state !== "closed") {
+      try {
+        await this.audioCtx.suspend();
+      } catch (err) {
+        console.warn("Failed to suspend AudioContext:", err);
+      }
     }
+    
     this.analyser = null;
     this.source = null;
   }
