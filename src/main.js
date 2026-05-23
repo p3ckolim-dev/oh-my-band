@@ -136,6 +136,10 @@ class App {
     // Changelog Modal
     this.changelogModal = document.getElementById("changelog-modal");
     this.btnChangelogClose = document.getElementById("btn-changelog-close");
+
+    // Sheet Music Centered Header
+    this.sheetSongTitle = document.getElementById("sheet-song-title");
+    this.sheetSongComposer = document.getElementById("sheet-song-composer");
   }
 
   initViews() {
@@ -688,6 +692,10 @@ class App {
     // Set play buttons text appropriately
     this.btnPlayPauseTempo.textContent = this.practiceMode === "wait" ? "▶ 메트로놈 시작 (Space)" : "▶ 연습 시작 (Space)";
     this.btnPlayPauseTempo.className = "btn btn-primary";
+
+    // Update Centered Sheet Music Header (always centered relative to the screen width)
+    if (this.sheetSongTitle) this.sheetSongTitle.textContent = song.title;
+    if (this.sheetSongComposer) this.sheetSongComposer.textContent = song.composer || "Traditional";
 
     // Start practice rendering
     this.sheetController.setMode(this.practiceMode);

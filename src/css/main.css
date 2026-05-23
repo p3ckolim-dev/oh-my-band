@@ -548,6 +548,39 @@ body.light-theme .sheet-music-card {
   color: #111111;
 }
 
+/* Static sheet music header centered in screen */
+.sheet-music-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+  text-align: center;
+  border-bottom: 1px dashed rgba(17, 17, 17, 0.08);
+  padding-bottom: 14px;
+  width: 100%;
+}
+
+.sheet-music-header h3 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #111111;
+  margin-bottom: 4px;
+  letter-spacing: -0.5px;
+}
+
+.sheet-music-header span {
+  font-size: 13px;
+  color: #666666;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Suppress the scrolling abcjs internal titles from SVG rendering */
+.abcjs-title, .abcjs-composer, .abcjs-subtitle, .abcjs-header, .abcjs-meta-top {
+  display: none !important;
+}
+
 #sheet-music-container {
   width: 100%;
   overflow-x: auto;
