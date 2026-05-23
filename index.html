@@ -20,7 +20,7 @@
           <h1>
             <span class="logo-icon">🥁🎹</span> 
             <span class="logo-text">Oh My Band</span>
-            <span id="header-version" class="version-chip" title="업데이트 히스토리 보기">v202605231930</span>
+            <span id="header-version" class="version-chip" title="업데이트 히스토리 보기">v202605232038</span>
             <span id="header-mode-badge" class="mode-chip" style="display: none;">대기 연습</span>
             <span id="header-song-title" class="song-chip" style="display: none;">반짝반짝 작은 별</span>
           </h1>
@@ -383,11 +383,24 @@
         </div>
         <div class="modal-body changelog-list">
           
+          <!-- v202605232038 -->
+          <div class="changelog-version-group">
+            <div class="changelog-version-header">
+              <span class="changelog-version-num">v202605232038</span>
+              <span class="changelog-version-date">2026. 05. 23 (현재)</span>
+            </div>
+            <ul class="changelog-items">
+              <li class="changelog-item"><strong>피아노 이중 트리거 차단 및 280ms 디바운스 도입</strong>: 피아노 스피커 소리가 마이크로 재입력되어 건반이 순간적으로 두 번 전진하며 노트를 간헐적으로 건너뛰던 피드백 버그 해결을 위해 280ms 하드웨어 감쇄 디바운스 판정 기술 도입.</li>
+              <li class="changelog-item"><strong>피아노 건반 및 소리 완전 소거</strong>: 정지 시 울리던 모든 액티브 오실레이터를 뮤트하고 건반 상태 색상을 즉각 초기화하는 완전 소거 프로세스 통합.</li>
+              <li class="changelog-item"><strong>드럼 캔버스 리사이징 및 동시 타격 감지</strong>: 로비에 숨겨져 너비가 0으로 찌그러지던 드럼 리듬레인 캔버스 뷰를 곡 진입 시 리사이징하여 완벽 복구하고, 대기 모드에서 동시 타격(Chord) 노트를 어떤 순서로 쳐도 감지하게 판정 기준을 완화했으며, 4비트 준비 연주 카운트인 공간(Lead-In) 도입.</li>
+            </ul>
+          </div>
+
           <!-- v202605231930 -->
           <div class="changelog-version-group">
             <div class="changelog-version-header">
               <span class="changelog-version-num">v202605231930</span>
-              <span class="changelog-version-date">2026. 05. 23 (현재)</span>
+              <span class="changelog-version-date">2026. 05. 23</span>
             </div>
             <ul class="changelog-items">
               <li class="changelog-item"><strong>Stitch 디자인 시스템 구축 및 전면 UI/UX 대개조</strong>: Google Stitch의 디자인 설계 원칙을 준수하는 단일 소스인 <code>DESIGN.md</code> 명세서를 기반으로 어플리케이션 전반에 통일된 프리미엄 다크 글래스모피즘(Glassmorphism) 하이엔드 테마 전격 도입.</li>
