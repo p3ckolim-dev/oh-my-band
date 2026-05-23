@@ -179,4 +179,16 @@ export class PianoRoll {
       delete this.activeOscillators[note];
     }
   }
+
+  stopAll() {
+    // Stop all oscillators
+    for (const note in this.activeOscillators) {
+      this.stopSynthSound(Number(note));
+    }
+    this.activeOscillators = {};
+    
+    // Clear all key classes
+    const keys = this.container.querySelectorAll(".piano-key");
+    keys.forEach(el => el.classList.remove("active", "correct", "wrong", "target"));
+  }
 }

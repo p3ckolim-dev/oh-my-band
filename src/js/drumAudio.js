@@ -22,7 +22,6 @@ export class DrumAudio {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     this.ctx = new AudioContextClass();
     this.createNoiseBuffer();
-    this.preloadSamples();
   }
 
   createNoiseBuffer() {
@@ -55,6 +54,7 @@ export class DrumAudio {
   }
 
   resume() {
+    this.init();
     if (this.ctx && this.ctx.state === "suspended") {
       this.ctx.resume();
     }

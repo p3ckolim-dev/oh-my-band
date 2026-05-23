@@ -67,13 +67,14 @@ export class DrumEngine {
   }
 
   loadSong(song, practiceMode, bpm, isMetronomeSoundOn) {
+    this.resizeCanvas(); // Synchronize canvas size before drawing/playing
     this.song = song;
     this.practiceMode = practiceMode;
     this.bpm = bpm || song.tempo;
     this.isMetronomeSoundOn = isMetronomeSoundOn;
     
-    this.currentBeat = 1.0; // Start at beat 1
-    this.lastMetronomeBeat = 0;
+    this.currentBeat = -3.0; // Start at beat -3.0 for a beautiful 4-beat visual lead-in!
+    this.lastMetronomeBeat = -4;
     this.playedNotesCount = 0;
     this.accuracySum = 0;
     this.isPlaying = false;
@@ -212,19 +213,19 @@ export class DrumEngine {
 
     if (this.practiceMode === "wait") {
       // WAIT MODE collision
-      // Find the first unplayed note
-      const targetNote = this.notesList.find(n => !n.played);
-      if (targetNote) {
-        if (targetNote.type === type) {
+      // Find all unplayed notes at the current beat (with small tolerance)
+      const currentBeatNotes = this.notesList.filter(n => !n.played && Math.abs(n.beat - this.currentBeat) < 0.01);
+      if (currentBeatNotes.length > 0) {
+        // Match the hit type with any of the unplayed notes at the current beat
+        const matchingNote = currentBeatNotes.find(n => n.type === type);
+        if (matchingNote) {
           // HIT!
-          targetNote.played = true;
-          targetNote.rating = "perfect";
+          matchingNote.played = true;
+          matchingNote.rating = "perfect";
           this.triggerRating("perfect");
           this.playedNotesCount++;
           this.accuracySum += 100;
           this.updateStatsHUD();
-        } else {
-          // Miss/Wrong hit (we don't count wrong drum hit as miss to avoid double penalty, just let them retry)
         }
       }
     } else {

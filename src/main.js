@@ -946,7 +946,7 @@ class App {
     }
     this.stopMicrophone();
     if (this.pianoRoll) {
-      this.pianoRoll.clearTargets();
+      this.pianoRoll.stopAll();
     }
     
     if (this.btnDemoAutoplay) {

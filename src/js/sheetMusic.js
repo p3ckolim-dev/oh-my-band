@@ -39,6 +39,9 @@ export class SheetMusicController {
     
     // Playback Cursor
     this.cursorEl = null;
+    
+    // Cooldown window to prevent double-triggering / skipping notes
+    this.lastCorrectNoteTime = 0;
   }
 
   setMode(mode) {
@@ -217,6 +220,7 @@ export class SheetMusicController {
 
   // Core Practice Judgment Hook
   checkPlayedNote(midiNote) {
+    if (this.isDemoPlaying) return null; // Ignore external inputs during automated play
     if (this.notes.length === 0 || this.currentIndex >= this.notes.length) return null;
 
     const target = this.notes[this.currentIndex];
@@ -225,6 +229,12 @@ export class SheetMusicController {
       this.notesPlayed++;
       
       if (midiNote === target.midi) {
+        const now = performance.now();
+        if (now - this.lastCorrectNoteTime < 280) {
+          return null; // Ignore rapid double-triggers from mic harmonics/noise
+        }
+        this.lastCorrectNoteTime = now;
+        
         this.correctNotesPlayed++;
         this.markNoteElement("correct");
         
@@ -253,7 +263,12 @@ export class SheetMusicController {
     } 
     else if (this.mode === "tempo" && this.isTempoPlaying) {
       if (midiNote === target.midi) {
+        const now = performance.now();
+        if (now - this.lastCorrectNoteTime < 280) {
+          return null; // Ignore rapid double-triggers
+        }
         if (!this.noteWindowPlayed) {
+          this.lastCorrectNoteTime = now;
           this.noteWindowPlayed = true;
           this.correctNotesPlayed++;
           this.markNoteElement("correct");
