@@ -584,6 +584,16 @@ body.light-theme .sheet-music-card {
 #sheet-music-container {
   width: 100%;
   overflow-x: auto;
+  display: flex;
+  justify-content: center;
+}
+
+#sheet-music-container svg {
+  display: block;
+  margin: 0 auto;
+  width: 100% !important;
+  max-width: 100%;
+  height: auto !important;
 }
 
 /* Custom styles for SVG elements in abcjs */

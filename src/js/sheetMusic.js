@@ -72,24 +72,19 @@ export class SheetMusicController {
     }
 
     const container = document.getElementById(this.containerId);
-    let staffWidth = 1300; // Generous default width
+    let staffWidth = 800; // Fallback width
     if (container) {
-      // Set staff width to 1.4x of parent container width, ensuring a minimum of 1300px
-      // This forces the notes to be spaced out wide and utilize the horizontal scrollbar beautifully.
-      staffWidth = Math.max(Math.round(container.clientWidth * 1.4), 1300);
+      // Set the staff width to match the interior client space of the container (minus standard margins)
+      staffWidth = Math.max(container.clientWidth - 48, 800);
     }
 
     this.visualObj = abcjs.renderAbc(this.containerId, this.abcString, {
+      responsive: "resize", // Stretch and scale beautifully matching the parent card's width
       add_classes: true,
-      scale: 1.15, // Slightly larger scale for professional legibility
-      paddingright: 20,
-      paddingleft: 20,
-      staffwidth: staffWidth,
-      timeBasedLayout: {
-        minPadding: 24, // Spaced out notes generously (DAW-style legibility)
-        minWidth: 24,
-        align: 'left'
-      }
+      scale: 1.25, // Rich, crisp legibility scale for perfect reading distance
+      paddingright: 0, // Utilize the full card margins
+      paddingleft: 0,
+      staffwidth: staffWidth
     });
 
     // Parse the actual notes inside the generated tune object
