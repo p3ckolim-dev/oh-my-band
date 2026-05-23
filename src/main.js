@@ -13,7 +13,6 @@ class App {
     this.inputSource = "mic"; // 'mic' or 'midi'
     this.practiceMode = "wait"; // 'wait' or 'tempo'
     this.isMetronomeSoundOn = true;
-    this.micPermissionDenied = false; // Track mic permission state to prevent loops
     
     // Components
     this.pianoRoll = null;
@@ -312,11 +311,34 @@ class App {
   // --- Input Setup & Control ---
 
   async setupMicrophone(isManual = false) {
-    // If permission was already denied, skip background auto-reconnects to prevent loop
-    if (this.micPermissionDenied && !isManual) {
-      this.statusDot.className = "status-dot";
-      this.statusText.textContent = "마이크 권한 거부됨";
-      return;
+    // Pre-check permission state via Permissions API before attempting getUserMedia.
+    // This prevents automatic (non-gesture) calls from triggering browser blocks.
+    const permState = await AudioDetector.checkPermission();
+    
+    if (!isManual) {
+      // For automatic/silent calls (song start, lobby return, etc.):
+      // Only proceed if permission is already granted. Otherwise, do nothing —
+      // the user will need to explicitly click the mic button to trigger the prompt.
+      if (permState === 'denied') {
+        this.statusDot.className = "status-dot";
+        this.statusText.textContent = "마이크 권한 거부됨 (브라우저 설정에서 허용 필요)";
+        return;
+      }
+      if (permState === 'prompt' || permState === 'unknown') {
+        // Permission not yet granted — don't auto-request (would be blocked without gesture)
+        this.statusDot.className = "status-dot";
+        this.statusText.textContent = "🎤 마이크 입력을 사용하려면 소스 설정에서 클릭해 주세요";
+        return;
+      }
+      // permState === 'granted' → safe to proceed silently
+    } else {
+      // Manual trigger: if explicitly denied, inform user about browser settings
+      if (permState === 'denied') {
+        this.statusDot.className = "status-dot";
+        this.statusText.textContent = "마이크 권한 거부됨";
+        alert("마이크 권한이 브라우저에서 차단되었습니다.\n\n주소창 왼쪽의 🔒 아이콘 → 사이트 설정에서\n마이크를 '허용'으로 변경한 후 새로고침해 주세요.");
+        return;
+      }
     }
 
     this.statusText.textContent = "마이크 사용 승인 요청 중...";
@@ -333,7 +355,6 @@ class App {
 
     try {
       await this.audioDetector.start();
-      this.micPermissionDenied = false; // Reset on success
       this.statusDot.className = "status-dot listening";
       this.statusText.textContent = "마이크 듣는 중 (소리를 내보세요)";
       this.visualizer.start(this.audioDetector.analyser);
@@ -342,7 +363,6 @@ class App {
       const isRealDenial = e.name === "NotAllowedError" || e.name === "PermissionDeniedError" || (e.message && e.message.includes("Permission"));
       
       if (isRealDenial) {
-        this.micPermissionDenied = true; // Only block auto-retries for actual permission denials
         this.statusDot.className = "status-dot";
         this.statusText.textContent = "마이크 권한 거부됨";
       } else {
@@ -353,7 +373,7 @@ class App {
       // Only prompt blocker alert if user manually triggered it
       if (isManual) {
         if (isRealDenial) {
-          alert("마이크 입력 권한이 필요합니다. 설정에서 마이크를 허용해 주세요!");
+          alert("마이크 권한이 브라우저에서 차단되었습니다.\n\n주소창 왼쪽의 🔒 아이콘 → 사이트 설정에서\n마이크를 '허용'으로 변경한 후 새로고침해 주세요.");
         } else {
           alert("마이크를 시작할 수 없습니다. 다른 탭이나 앱에서 마이크를 사용 중인지 확인해 주세요.");
         }

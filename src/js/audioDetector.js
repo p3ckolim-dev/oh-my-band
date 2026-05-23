@@ -26,6 +26,23 @@ export class AudioDetector {
     this.sensitivity = Number(val);
   }
 
+  /**
+   * Check current microphone permission state using the Permissions API.
+   * Returns 'granted', 'denied', 'prompt', or 'unknown' if API is unsupported.
+   */
+  static async checkPermission() {
+    try {
+      if (navigator.permissions && navigator.permissions.query) {
+        const result = await navigator.permissions.query({ name: 'microphone' });
+        return result.state; // 'granted' | 'denied' | 'prompt'
+      }
+    } catch (e) {
+      // Some browsers don't support querying 'microphone' permission
+      console.warn("Permissions API query for microphone not supported:", e);
+    }
+    return 'unknown';
+  }
+
   async start() {
     if (this.isListening) return;
     
@@ -51,11 +68,7 @@ export class AudioDetector {
       
       // Ensure context is running (comply with modern browser policies)
       if (this.audioCtx.state === "suspended") {
-        try {
-          await this.audioCtx.resume();
-        } catch (resumeErr) {
-          console.warn("AudioContext resume deferred until user interaction:", resumeErr);
-        }
+        await this.audioCtx.resume();
       }
       
       this.isListening = true;
@@ -98,7 +111,7 @@ export class AudioDetector {
     if (!this.isListening || !this.analyser) return;
 
     // Get time-domain data for autocorrelation pitch detection
-    this.analyser.getFloat32TimeDomainData(this.buffer);
+    this.analyser.getFloatTimeDomainData(this.buffer);
     
     // 1. Calculate Root-Mean-Square (RMS) volume
     let sum = 0;
