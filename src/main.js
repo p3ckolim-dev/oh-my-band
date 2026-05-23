@@ -132,6 +132,10 @@ class App {
     this.modalPracticeMode = document.getElementById("modal-practice-mode");
     this.btnModalRetry = document.getElementById("btn-modal-retry");
     this.btnModalLobby = document.getElementById("btn-modal-lobby");
+
+    // Changelog Modal
+    this.changelogModal = document.getElementById("changelog-modal");
+    this.btnChangelogClose = document.getElementById("btn-changelog-close");
   }
 
   initViews() {
@@ -287,11 +291,14 @@ class App {
       this.toggleMetronome();
     });
 
-    // Keyboard space bar triggers play/pause metronome (prevent when result modal is open)
+    // Keyboard space bar triggers play/pause metronome (prevent when result or changelog modal is open)
     window.addEventListener("keydown", (e) => {
       if (e.code === "Space" && this.practiceView.classList.contains("active")) {
-        if (this.resultModal && !this.resultModal.classList.contains("hidden")) {
-          return; // Ignore space key when result modal is showing
+        const isResultOpen = this.resultModal && !this.resultModal.classList.contains("hidden");
+        const isChangelogOpen = this.changelogModal && !this.changelogModal.classList.contains("hidden");
+        
+        if (isResultOpen || isChangelogOpen) {
+          return; // Ignore space key when modal is showing
         }
         e.preventDefault();
         this.toggleMetronome();
@@ -310,6 +317,29 @@ class App {
       this.resultModal.classList.add("hidden");
       this.stopPractice();
     });
+
+    // Changelog Modal Toggle
+    if (this.headerVersion) {
+      this.headerVersion.addEventListener("click", () => {
+        if (this.changelogModal) {
+          this.changelogModal.classList.remove("hidden");
+        }
+      });
+    }
+
+    if (this.btnChangelogClose) {
+      this.btnChangelogClose.addEventListener("click", () => {
+        this.changelogModal.classList.add("hidden");
+      });
+    }
+
+    if (this.changelogModal) {
+      this.changelogModal.addEventListener("click", (e) => {
+        if (e.target === this.changelogModal) {
+          this.changelogModal.classList.add("hidden");
+        }
+      });
+    }
   }
 
   loadPresetSongsList() {

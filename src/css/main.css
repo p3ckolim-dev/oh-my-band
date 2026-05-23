@@ -137,6 +137,20 @@ header {
   letter-spacing: 0.5px;
   box-shadow: 0 0 8px rgba(0, 240, 255, 0.12);
   display: inline-block;
+  cursor: pointer;
+  user-select: none;
+  transition: var(--transition-smooth);
+}
+
+.version-chip:hover {
+  background: rgba(0, 240, 255, 0.18);
+  border-color: var(--accent-cyan);
+  box-shadow: var(--shadow-neon-cyan);
+  transform: translateY(-1px) scale(1.05);
+}
+
+.version-chip:active {
+  transform: translateY(0) scale(0.97);
 }
 
 .status-badge {
@@ -1422,5 +1436,103 @@ body.light-theme .modal-stat-item {
   font-weight: 600;
   justify-content: center;
 }
+
+/* Changelog List & Version Styles */
+.changelog-list {
+  width: 100%;
+  text-align: left;
+  max-height: 330px;
+  overflow-y: auto;
+  margin-top: 8px;
+  padding-right: 12px;
+}
+
+/* Custom internal scrollbar for Changelog modal */
+.changelog-list::-webkit-scrollbar {
+  width: 4px;
+}
+.changelog-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+.changelog-list::-webkit-scrollbar-thumb {
+  background: var(--bg-tertiary);
+  border-radius: 2px;
+}
+
+.changelog-version-group {
+  margin-bottom: 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 16px;
+}
+
+.changelog-version-group:last-child {
+  margin-bottom: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+body.light-theme .changelog-version-group {
+  border-bottom-color: rgba(15, 23, 42, 0.08);
+}
+
+.changelog-version-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.changelog-version-num {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 14.5px;
+  color: var(--accent-cyan);
+  background: rgba(0, 240, 255, 0.06);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 240, 255, 0.15);
+}
+
+body.light-theme .changelog-version-num {
+  background: rgba(2, 132, 199, 0.06);
+  border-color: rgba(2, 132, 199, 0.15);
+}
+
+.changelog-version-date {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.changelog-items {
+  list-style: none;
+  padding-left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.changelog-item {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-primary);
+  position: relative;
+  padding-left: 16px;
+}
+
+.changelog-item::before {
+  content: "•";
+  color: var(--accent-cyan);
+  position: absolute;
+  left: 2px;
+  font-weight: 900;
+  font-size: 14px;
+  line-height: 1;
+}
+
+body.light-theme .changelog-item::before {
+  color: var(--accent-purple);
+}
+
 
 
