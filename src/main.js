@@ -819,6 +819,35 @@ class App {
     setTimeout(() => {
       this.metroLight.classList.remove("tick");
     }, 150);
+
+    // If in drum mode and metronome sound is enabled, play synthesized tick sound
+    if (this.currentInstrument === "drum" && this.isMetronomeSoundOn) {
+      try {
+        const audioCtx = this.drumAudio.ctx;
+        if (audioCtx) {
+          if (audioCtx.state === "suspended") {
+            audioCtx.resume();
+          }
+          const osc = audioCtx.createOscillator();
+          const gainNode = audioCtx.createGain();
+          
+          // Triplets/shuffle beats will have fractions, we round index to check strong beat
+          const isStrong = (Math.round(tickIndex) % 4 === 0);
+          osc.frequency.setValueAtTime(isStrong ? 1000 : 700, audioCtx.currentTime);
+          
+          gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+          
+          osc.connect(gainNode);
+          gainNode.connect(audioCtx.destination);
+          
+          osc.start(audioCtx.currentTime);
+          osc.stop(audioCtx.currentTime + 0.06);
+        }
+      } catch (err) {
+        console.warn("Failed to play metronome audio tick:", err);
+      }
+    }
   }
 
   // --- Practice Session Transitions ---
