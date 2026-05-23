@@ -41,6 +41,10 @@ class App {
   init() {
     this.cacheElements();
 
+    // Set default instrument theme class
+    document.body.classList.add("piano-mode");
+    document.body.classList.remove("drum-mode");
+
     // Initialize Theme
     this.isLightTheme = localStorage.getItem("theme") === "light";
     if (this.isLightTheme) {
@@ -160,7 +164,7 @@ class App {
     this.sheetSongComposer = document.getElementById("sheet-song-composer");
 
     // Oh My Band UI Elements
-    this.instrumentTabs = document.querySelector(".instrument-tabs-container");
+    this.instrumentTabs = document.querySelector(".instrument-cards");
     this.customSongBox = document.querySelector(".custom-song-box");
     this.pianoPracticeArea = document.querySelector(".sheet-music-outer");
     this.pianoRollCard = document.querySelector(".piano-roll-card");
@@ -174,16 +178,16 @@ class App {
   }
 
   bindEvents() {
-    // Oh My Band: Instrument switching tabs listener
+    // Oh My Band: Instrument switching cards listener
     if (this.instrumentTabs) {
       this.instrumentTabs.addEventListener("click", (e) => {
-        const tab = e.target.closest(".instrument-tab");
-        if (!tab) return;
+        const card = e.target.closest(".instrument-card");
+        if (!card) return;
         
-        this.instrumentTabs.querySelectorAll(".instrument-tab").forEach(el => el.classList.remove("active"));
-        tab.classList.add("active");
+        this.instrumentTabs.querySelectorAll(".instrument-card").forEach(el => el.classList.remove("active"));
+        card.classList.add("active");
         
-        this.currentInstrument = tab.dataset.instrument;
+        this.currentInstrument = card.dataset.instrument;
         this.handleInstrumentChanged();
       });
     }
@@ -453,6 +457,23 @@ class App {
     
     // Rebuild songs list
     this.loadPresetSongsList();
+
+    const lobbyView = document.getElementById("lobby-view");
+    if (this.currentInstrument === "piano") {
+      if (lobbyView) {
+        lobbyView.classList.add("piano-mode");
+        lobbyView.classList.remove("drum-mode");
+      }
+      document.body.classList.add("piano-mode");
+      document.body.classList.remove("drum-mode");
+    } else {
+      if (lobbyView) {
+        lobbyView.classList.add("drum-mode");
+        lobbyView.classList.remove("piano-mode");
+      }
+      document.body.classList.add("drum-mode");
+      document.body.classList.remove("piano-mode");
+    }
 
     const titleLogo = document.querySelector(".logo-text");
     if (this.currentInstrument === "piano") {

@@ -5,6 +5,9 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Oh My Band 🥁🎹</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   </head>
   <body>
     <div class="container">
@@ -15,7 +18,7 @@
           <h1>
             <span class="logo-icon">🥁🎹</span> 
             <span class="logo-text">Oh My Band</span>
-            <span id="header-version" class="version-chip" title="업데이트 히스토리 보기">v202605231900</span>
+            <span id="header-version" class="version-chip" title="업데이트 히스토리 보기">v202605231930</span>
             <span id="header-mode-badge" class="mode-chip" style="display: none;">대기 연습</span>
             <span id="header-song-title" class="song-chip" style="display: none;">반짝반짝 작은 별</span>
           </h1>
@@ -39,120 +42,145 @@
       </header>
 
       <!-- 1. LOBBY VIEW: 연습곡 및 설정 선택 화면 -->
-      <div id="lobby-view" class="lobby-view">
+      <!-- 1. LOBBY VIEW: 연습곡 및 설정 선택 화면 -->
+      <div id="lobby-view" class="lobby-view piano-mode">
         
-        <!-- 악기 선택 탭 -->
-        <div class="instrument-tabs-container">
-          <button class="instrument-tab active piano-tab" data-instrument="piano">
-            🎹 클래식 피아노
-          </button>
-          <button class="instrument-tab drum-tab" data-instrument="drum">
-            🥁 리얼 드럼게임
-          </button>
-        </div>
-        
-        <!-- 왼쪽: 연습곡 선택 리스트 -->
-        <div class="glass-card songs-card">
-          <div class="panel-title">
-            <span>연습할 곡 선택</span>
-            <span class="text-cyan" style="font-size: 13px;" id="song-count-badge">4 곡 로드됨</span>
+        <!-- 악기 선택 섹션 -->
+        <div class="instrument-selection-section">
+          <div class="selection-title-group">
+            <h2>나만의 스마트 밴드 음악실 🥁🎹</h2>
+            <p>연습하고 싶은 악기를 선택해보세요. 맞춤형 곡 리스트와 실시간 판정 엔진이 준비됩니다.</p>
           </div>
           
-          <div id="songs-list" class="songs-list">
-            <!-- JavaScript에서 동적으로 생성됩니다. -->
-          </div>
-
-          <!-- 커스텀 악보 입력 창 -->
-          <div class="custom-song-box">
-            <div class="panel-title" style="font-size: 14px; margin-top: 12px;">
-              <span>나만의 ABC 악보 추가</span>
+          <div class="instrument-cards">
+            <div class="instrument-card piano-card active" data-instrument="piano">
+              <div class="card-glow"></div>
+              <div class="card-icon">🎹</div>
+              <div class="card-details">
+                <h3>클래식 피아노 연습</h3>
+                <p>마이크의 음역 감지 기술 및 MIDI 인터페이스를 통하여, 오선지 악보와 피아노 건반 가이드를 보며 연습합니다.</p>
+              </div>
+              <div class="active-badge">ACTIVE</div>
             </div>
-            <textarea id="custom-abc-input" placeholder="여기에 ABC 표기법으로 악보를 붙여넣으세요...&#10;예: X:1&#10;T:비행기&#10;K:C&#10;M:4/4&#10;E D C D | E E E2 | D D D2 | E G G2 |"></textarea>
-            <button id="btn-load-custom" class="btn btn-secondary">
-              ⚡ 커스텀 곡 로드 및 연주
-            </button>
+            
+            <div class="instrument-card drum-card" data-instrument="drum">
+              <div class="card-glow"></div>
+              <div class="card-icon">🥁</div>
+              <div class="card-details">
+                <h3>리얼 5레인 드럼게임</h3>
+                <p>가상의 3D 드럼 세트를 클릭하거나 단축키로 타격하며, 가로로 흐르는 노트를 박자에 맞춰 클리어하는 흥미진진한 리듬 트레이닝을 경험합니다.</p>
+              </div>
+              <div class="active-badge">ACTIVE</div>
+            </div>
           </div>
         </div>
 
-        <!-- 오른쪽: 설정 및 오디오 비주얼라이저 -->
-        <div class="glass-card control-card">
-          <div class="panel-title">연습 설정</div>
+        <!-- 하단 대시보드 그리드 영역 -->
+        <div class="lobby-dashboard-grid">
           
-          <!-- 연습 모드 선택 -->
-          <div class="control-group">
-            <span class="control-label">연습 모드</span>
-            <div class="selector-pill" id="mode-selector">
-              <div class="selector-option active" data-mode="wait">대기 연습 (Wait)</div>
-              <div class="selector-option" data-mode="tempo">템포 연습 (Tempo)</div>
-            </div>
-            <p style="font-size: 11px; color: var(--text-secondary); line-height: 1.4;" id="mode-desc">
-              * **대기 연습**: 올바른 건반을 연주할 때까지 악보가 멈추고 기다려줍니다. 초보자에게 완벽합니다.
-            </p>
-          </div>
-
-          <!-- 입력 소스 선택 -->
-          <div class="control-group">
-            <span class="control-label">입력 소스</span>
-            <div class="selector-pill" id="source-selector">
-              <div class="selector-option active" data-source="mic">🎤 마이크 입력</div>
-              <div class="selector-option" data-source="midi">🎹 MIDI 키보드</div>
-            </div>
-          </div>
-
-          <!-- 마이크 환경설정 & 시각화 (마이크 모드일 때만 활성화) -->
-          <div class="control-group" id="mic-config-group">
-            <div class="flex-between">
-              <span class="control-label">마이크 입력 레벨 & 파형</span>
-              <span id="volume-val" class="val-display text-cyan">0%</span>
+          <!-- 왼쪽: 연습곡 선택 리스트 -->
+          <div class="glass-card songs-card">
+            <div class="panel-title">
+              <span>연습할 곡 선택</span>
+              <span class="text-cyan" style="font-size: 13px;" id="song-count-badge">5 곡 로드됨</span>
             </div>
             
-            <div class="visualizer-container">
-              <canvas id="mic-visualizer"></canvas>
+            <div id="songs-list" class="songs-list">
+              <!-- JavaScript에서 동적으로 생성됩니다. -->
             </div>
+
+            <!-- 커스텀 악보 입력 창 -->
+            <div class="custom-song-box">
+              <div class="panel-title" style="font-size: 14px; margin-top: 12px;">
+                <span>나만의 ABC 악보 추가</span>
+              </div>
+              <textarea id="custom-abc-input" placeholder="여기에 ABC 표기법으로 악보를 붙여넣으세요...&#10;예: X:1&#10;T:비행기&#10;K:C&#10;M:4/4&#10;E D C D | E E E2 | D D D2 | E G G2 |"></textarea>
+              <button id="btn-load-custom" class="btn btn-secondary">
+                ⚡ 커스텀 곡 로드 및 연주
+              </button>
+            </div>
+          </div>
+
+          <!-- 오른쪽: 설정 및 오디오 비주얼라이저 -->
+          <div class="glass-card control-card">
+            <div class="panel-title">연습 설정</div>
             
-            <div class="calib-indicator">
-              <span>입력 문턱값 (데시벨 필터)</span>
-              <div class="volume-bar-outer">
-                <div id="volume-bar" class="volume-bar-inner"></div>
+            <!-- 연습 모드 선택 -->
+            <div class="control-group">
+              <span class="control-label">연습 모드</span>
+              <div class="selector-pill" id="mode-selector">
+                <div class="selector-option active" data-mode="wait">대기 연습 (Wait)</div>
+                <div class="selector-option" data-mode="tempo">템포 연습 (Tempo)</div>
+              </div>
+              <p style="font-size: 11px; color: var(--text-secondary); line-height: 1.4;" id="mode-desc">
+                * **대기 연습**: 올바른 건반을 연주할 때까지 악보가 멈추고 기다려줍니다. 초보자에게 완벽합니다.
+              </p>
+            </div>
+
+            <!-- 입력 소스 선택 -->
+            <div class="control-group">
+              <span class="control-label">입력 소스</span>
+              <div class="selector-pill" id="source-selector">
+                <div class="selector-option active" data-source="mic">🎤 마이크 입력</div>
+                <div class="selector-option" data-source="midi">🎹 MIDI 키보드</div>
               </div>
             </div>
 
-            <div class="slider-container" style="margin-top: 4px;">
-              <span style="font-size: 11px; color: var(--text-secondary);">노이즈 필터 감도:</span>
-              <input type="range" id="mic-sensitivity" min="0" max="100" value="35" />
-              <span id="sensitivity-val" class="val-display">35</span>
+            <!-- 마이크 환경설정 & 시각화 (마이크 모드일 때만 활성화) -->
+            <div class="control-group" id="mic-config-group">
+              <div class="flex-between">
+                <span class="control-label">마이크 입력 레벨 & 파형</span>
+                <span id="volume-val" class="val-display text-cyan">0%</span>
+              </div>
+              
+              <div class="visualizer-container">
+                <canvas id="mic-visualizer"></canvas>
+              </div>
+              
+              <div class="calib-indicator">
+                <span>입력 문턱값 (데시벨 필터)</span>
+                <div class="volume-bar-outer">
+                  <div id="volume-bar" class="volume-bar-inner"></div>
+                </div>
+              </div>
+
+              <div class="slider-container" style="margin-top: 4px;">
+                <span style="font-size: 11px; color: var(--text-secondary);">노이즈 필터 감도:</span>
+                <input type="range" id="mic-sensitivity" min="0" max="100" value="35" />
+                <span id="sensitivity-val" class="val-display">35</span>
+              </div>
+
+              <div class="calib-tips" style="margin-top: 8px;">
+                🎤 <strong>마이크 팁</strong>: 스피커 소리가 마이크로 재입력되지 않도록 <strong>헤드폰</strong>을 착용해 주세요! 조용한 곳에서 연주하면 검출이 훨씬 정확해집니다.
+              </div>
             </div>
 
-            <div class="calib-tips" style="margin-top: 8px;">
-              🎤 <strong>마이크 팁</strong>: 스피커 소리가 마이크로 재입력되지 않도록 <strong>헤드폰</strong>을 착용해 주세요! 조용한 곳에서 연주하면 검출이 훨씬 정확해집니다.
+            <!-- MIDI 키보드 상태 (MIDI 모드일 때만 활성화) -->
+            <div class="control-group" id="midi-config-group" style="display: none;">
+              <span class="control-label">연결된 MIDI 장치</span>
+              <div class="calib-tips" id="midi-devices-list" style="background: rgba(0, 240, 255, 0.05); border-color: rgba(0, 240, 255, 0.2);">
+                연결된 MIDI 기기를 찾는 중입니다...
+              </div>
+              <div class="calib-tips" style="margin-top: 8px;">
+                🎹 <strong>MIDI 팁</strong>: USB MIDI 케이블로 건반을 컴퓨터에 연결하면, 마이크 없이 100% 무오류로 연주를 감지합니다!
+              </div>
             </div>
+
+            <!-- 드럼 전용 팁 가이드 (드럼 모드일 때 활성화) -->
+            <div class="control-group" id="drum-tips-group" style="display: none;">
+              <span class="control-label">드럼 연주 가이드</span>
+              <div class="calib-tips" style="line-height: 1.6; font-size: 12.5px; background: rgba(255, 51, 102, 0.05); border-color: rgba(255, 51, 102, 0.2);">
+                🥁 <strong>키보드 연주 키 안내</strong>:<br>
+                - <strong style="color: var(--accent-cyan);">Space</strong>: 베이스 드럼 (KICK)<br>
+                - <strong style="color: var(--accent-orange);">S</strong>: 하이햇 심벌 (HI-HAT)<br>
+                - <strong style="color: var(--accent-red);">D</strong>: 스네어 드럼 (SNARE)<br>
+                - <strong style="color: var(--accent-green);">J</strong>: 중간 탐탐 (TOM-TOM)<br>
+                - <strong style="color: var(--accent-purple);">K</strong>: 크래쉬 심벌 (CRASH)<br><br>
+                🔌 <strong>전자드럼 연동</strong>: USB MIDI 케이블로 전자드럼 패드나 건반을 연결하면, 자동 매핑되어 연주를 감지합니다!
+              </div>
+            </div>
+
           </div>
-
-          <!-- MIDI 키보드 상태 (MIDI 모드일 때만 활성화) -->
-          <div class="control-group" id="midi-config-group" style="display: none;">
-            <span class="control-label">연결된 MIDI 장치</span>
-            <div class="calib-tips" id="midi-devices-list" style="background: rgba(0, 240, 255, 0.05); border-color: rgba(0, 240, 255, 0.2);">
-              연결된 MIDI 기기를 찾는 중입니다...
-            </div>
-            <div class="calib-tips" style="margin-top: 8px;">
-              🎹 <strong>MIDI 팁</strong>: USB MIDI 케이블로 건반을 컴퓨터에 연결하면, 마이크 없이 100% 무오류로 연주를 감지합니다!
-            </div>
-          </div>
-
-          <!-- 드럼 전용 팁 가이드 (드럼 모드일 때 활성화) -->
-          <div class="control-group" id="drum-tips-group" style="display: none;">
-            <span class="control-label">드럼 연주 가이드</span>
-            <div class="calib-tips" style="line-height: 1.6; font-size: 12.5px; background: rgba(255, 51, 102, 0.05); border-color: rgba(255, 51, 102, 0.2);">
-              🥁 <strong>키보드 연주 키 안내</strong>:<br>
-              - <strong style="color: var(--accent-cyan);">Space</strong>: 베이스 드럼 (KICK)<br>
-              - <strong style="color: var(--accent-orange);">S</strong>: 하이햇 심벌 (HI-HAT)<br>
-              - <strong style="color: var(--accent-red);">D</strong>: 스네어 드럼 (SNARE)<br>
-              - <strong style="color: var(--accent-green);">J</strong>: 중간 탐탐 (TOM-TOM)<br>
-              - <strong style="color: var(--accent-purple);">K</strong>: 크래쉬 심벌 (CRASH)<br><br>
-              🔌 <strong>전자드럼 연동</strong>: USB MIDI 케이블로 전자드럼 패드나 건반을 연결하면, 자동 매핑되어 연주를 감지합니다!
-            </div>
-          </div>
-
         </div>
       </div>
 
@@ -353,11 +381,38 @@
         </div>
         <div class="modal-body changelog-list">
           
+          <!-- v202605231930 -->
+          <div class="changelog-version-group">
+            <div class="changelog-version-header">
+              <span class="changelog-version-num">v202605231930</span>
+              <span class="changelog-version-date">2026. 05. 23 (현재)</span>
+            </div>
+            <ul class="changelog-items">
+              <li class="changelog-item"><strong>Stitch 디자인 시스템 구축 및 전면 UI/UX 대개조</strong>: Google Stitch의 디자인 설계 원칙을 준수하는 단일 소스인 <code>DESIGN.md</code> 명세서를 기반으로 어플리케이션 전반에 통일된 프리미엄 다크 글래스모피즘(Glassmorphism) 하이엔드 테마 전격 도입.</li>
+              <li class="changelog-item"><strong>피아노/드럼 선택 악기별 능동적 레이아웃 반응형 액센트</strong>: 악기 카드를 클릭하면 앱 헤더, 카드 보더, 그림자 및 버튼들의 모든 보조 빛깔이 실시간으로 피아노(스카이 사이언)와 드럼(에너제틱 로즈 레드) 테마로 어우러지게 전환되는 동적 액센트 엔진 장착.</li>
+              <li class="changelog-item"><strong>가상 리얼 3D 악기 인터페이스 감성 업그레이드</strong>: 흰 건반의 3D 입체 단차와 누를 때의 기계적 깊이감 및 피드백 주황 아우라를 구현하고, 드럼 패드와 심벌즈에 광택 질감 및 타격 시 폭발적인 크기의 네온 헤일로 아우라를 추가하여 압도적으로 생동감 넘치는 연주 환경 실현.</li>
+              <li class="changelog-item"><strong>게임형 HUD 형태의 스튜디오 정보 제어창</strong>: 곡 리스트를 우아한 글래스 카드 리스트로 개조하여 난이도별 광채 태그를 삽입하고, 연습용 상단 제어 바와 실시간 정확도/진행도 상태 표시기를 우주선 DAW 계기판 스타일로 승화.</li>
+            </ul>
+          </div>
+
+          <!-- v202605231920 -->
+          <div class="changelog-version-group">
+            <div class="changelog-version-header">
+              <span class="changelog-version-num">v202605231920</span>
+              <span class="changelog-version-date">2026. 05. 23</span>
+            </div>
+            <ul class="changelog-items">
+              <li class="changelog-item"><strong>로비 대시보드 및 가상 악기 카드 전면 리모델링</strong>: 단조롭고 지나치게 세로로 길쭉했던 옛 악기 전환 탭 구조를 전면 해체. 각 악기의 정보와 핵심 기능(피아노 연습 vs 5레인 드럼게임)이 역동적인 일러스트성 카드와 세련된 그라데이션, 개별 네온 글로우로 어우러진 '가상 악기 웰컴 카드' 대시보드로 리모델링.</li>
+              <li class="changelog-item"><strong>CSS Grid 레이아웃 충돌 해결 및 대시보드 분리</strong>: 악기 탭이 그리드 요소로 처리되어 비정상적으로 길게 늘어나던 레이아웃 버그를 근본적으로 수정. 상단 악기 선택 섹션과 하단의 2열 반응형 곡목록/설정 카드를 깔끔히 계층 분리하여 한눈에 보이고 대칭 균형이 완벽한 프리미엄 스튜디오 레이아웃 실현.</li>
+              <li class="changelog-item"><strong>선택 악기별 로비 대시보드 맞춤 하이라이트</strong>: 사용자가 피아노 또는 드럼 카드를 활성화함에 따라 로비 배경 및 곡별 호버링 테두리가 각각 아름답게 매칭(피아노: 스카이 사이언 블러 / 드럼: 로즈 레드 섀도우)되도록 동적 클래스 연계.</li>
+            </ul>
+          </div>
+
           <!-- v202605231900 -->
           <div class="changelog-version-group">
             <div class="changelog-version-header">
               <span class="changelog-version-num">v202605231900</span>
-              <span class="changelog-version-date">2026. 05. 23 (현재)</span>
+              <span class="changelog-version-date">2026. 05. 23</span>
             </div>
             <ul class="changelog-items">
               <li class="changelog-item"><strong>오 마이 밴드(Oh My Band) 리얼 드럼 및 5레인 리듬게임 런칭</strong>: 단일 악기 피아노 연습기에서 피아노와 드럼을 함께 다루는 '오 마이 밴드' 멀티 악기 플랫폼으로 전면 브랜딩 개편. 로비 상단 악기 선택 탭, 반응형 3D 가상 드럼 키트 인터페이스, 가로 스크롤형 5개 전용 레인 드럼 리듬게임 엔진 도입.</li>
