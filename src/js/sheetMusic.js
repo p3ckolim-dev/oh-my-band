@@ -72,21 +72,22 @@ export class SheetMusicController {
     }
 
     const container = document.getElementById(this.containerId);
-    let staffWidth = 800;
+    let staffWidth = 1300; // Generous default width
     if (container) {
-      staffWidth = Math.max(container.clientWidth, 800);
+      // Set staff width to 1.4x of parent container width, ensuring a minimum of 1300px
+      // This forces the notes to be spaced out wide and utilize the horizontal scrollbar beautifully.
+      staffWidth = Math.max(Math.round(container.clientWidth * 1.4), 1300);
     }
 
     this.visualObj = abcjs.renderAbc(this.containerId, this.abcString, {
-      responsive: "resize",
       add_classes: true,
-      scale: 1.1,
-      paddingright: 15,
-      paddingleft: 15,
+      scale: 1.15, // Slightly larger scale for professional legibility
+      paddingright: 20,
+      paddingleft: 20,
       staffwidth: staffWidth,
       timeBasedLayout: {
-        minPadding: 10,
-        minWidth: 15,
+        minPadding: 24, // Spaced out notes generously (DAW-style legibility)
+        minWidth: 24,
         align: 'left'
       }
     });
