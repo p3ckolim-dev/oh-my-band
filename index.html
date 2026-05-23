@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Oh My Piano 🎹</title>
+    <title>Oh My Band 🥁🎹</title>
   </head>
   <body>
     <div class="container">
@@ -13,9 +13,9 @@
       <header>
         <div class="logo-section" id="logo-home-trigger" title="로비로 이동">
           <h1>
-            <span class="logo-icon">🎹</span> 
-            <span class="logo-text">Oh My Piano</span>
-            <span id="header-version" class="version-chip" title="업데이트 히스토리 보기">v202605231525</span>
+            <span class="logo-icon">🥁🎹</span> 
+            <span class="logo-text">Oh My Band</span>
+            <span id="header-version" class="version-chip" title="업데이트 히스토리 보기">v202605231900</span>
             <span id="header-mode-badge" class="mode-chip" style="display: none;">대기 연습</span>
             <span id="header-song-title" class="song-chip" style="display: none;">반짝반짝 작은 별</span>
           </h1>
@@ -40,6 +40,16 @@
 
       <!-- 1. LOBBY VIEW: 연습곡 및 설정 선택 화면 -->
       <div id="lobby-view" class="lobby-view">
+        
+        <!-- 악기 선택 탭 -->
+        <div class="instrument-tabs-container">
+          <button class="instrument-tab active piano-tab" data-instrument="piano">
+            🎹 클래식 피아노
+          </button>
+          <button class="instrument-tab drum-tab" data-instrument="drum">
+            🥁 리얼 드럼게임
+          </button>
+        </div>
         
         <!-- 왼쪽: 연습곡 선택 리스트 -->
         <div class="glass-card songs-card">
@@ -126,6 +136,20 @@
             </div>
             <div class="calib-tips" style="margin-top: 8px;">
               🎹 <strong>MIDI 팁</strong>: USB MIDI 케이블로 건반을 컴퓨터에 연결하면, 마이크 없이 100% 무오류로 연주를 감지합니다!
+            </div>
+          </div>
+
+          <!-- 드럼 전용 팁 가이드 (드럼 모드일 때 활성화) -->
+          <div class="control-group" id="drum-tips-group" style="display: none;">
+            <span class="control-label">드럼 연주 가이드</span>
+            <div class="calib-tips" style="line-height: 1.6; font-size: 12.5px; background: rgba(255, 51, 102, 0.05); border-color: rgba(255, 51, 102, 0.2);">
+              🥁 <strong>키보드 연주 키 안내</strong>:<br>
+              - <strong style="color: var(--accent-cyan);">Space</strong>: 베이스 드럼 (KICK)<br>
+              - <strong style="color: var(--accent-orange);">S</strong>: 하이햇 심벌 (HI-HAT)<br>
+              - <strong style="color: var(--accent-red);">D</strong>: 스네어 드럼 (SNARE)<br>
+              - <strong style="color: var(--accent-green);">J</strong>: 중간 탐탐 (TOM-TOM)<br>
+              - <strong style="color: var(--accent-purple);">K</strong>: 크래쉬 심벌 (CRASH)<br><br>
+              🔌 <strong>전자드럼 연동</strong>: USB MIDI 케이블로 전자드럼 패드나 건반을 연결하면, 자동 매핑되어 연주를 감지합니다!
             </div>
           </div>
 
@@ -226,6 +250,56 @@
           </div>
         </div>
 
+        <!-- 3. DRUM PRACTICE AREA (Oh My Band) -->
+        <div id="drum-practice-area" class="drum-practice-area">
+          <!-- 드럼용 레인 카드 -->
+          <div class="glass-card drum-canvas-card">
+            <div class="panel-title" style="margin-bottom: 12px; font-size: 14px; display: flex; justify-content: space-between;">
+              <span>실시간 5레인 드럼 악보</span>
+              <span style="font-size: 12px; color: var(--text-secondary);">판정선(좌측)에 맞춰 키보드나 화면 패드를 쳐보세요!</span>
+            </div>
+            
+            <!-- 리듬게임 캔버스 -->
+            <div style="position: relative;">
+              <canvas id="drum-canvas"></canvas>
+              <!-- 실시간 판정 글씨용 컨테이너 -->
+              <div class="drum-rating-container">
+                <div id="drum-rating-text" class="drum-rating-text"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 대화형 가상 드럼 키트 카드 -->
+          <div class="glass-card drum-kit-card">
+            <div class="panel-title" style="margin-bottom: 12px; font-size: 14px;">
+              <span>가상 리얼 드럼 세트</span>
+            </div>
+            
+            <div class="drum-kit-outer" id="interactive-drum-kit">
+              <div class="drum-pad pad-crash" data-drum="crash">
+                <span class="pad-name">CRASH</span>
+                <span class="pad-key">K</span>
+              </div>
+              <div class="drum-pad pad-hihat" data-drum="hihat">
+                <span class="pad-name">HI-HAT</span>
+                <span class="pad-key">S</span>
+              </div>
+              <div class="drum-pad pad-tom" data-drum="tom">
+                <span class="pad-name">TOM-TOM</span>
+                <span class="pad-key">J</span>
+              </div>
+              <div class="drum-pad pad-snare" data-drum="snare">
+                <span class="pad-name">SNARE</span>
+                <span class="pad-key">D</span>
+              </div>
+              <div class="drum-pad pad-kick" data-drum="kick">
+                <span class="pad-name">BASS/KICK</span>
+                <span class="pad-key">Space</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
     </div>
@@ -275,15 +349,28 @@
         <div class="modal-header">
           <span class="modal-crown">🚀</span>
           <h2>업데이트 히스토리</h2>
-          <p class="modal-composer">Oh My Piano의 진화 기록</p>
+          <p class="modal-composer">Oh My Band의 진화 기록</p>
         </div>
         <div class="modal-body changelog-list">
           
+          <!-- v202605231900 -->
+          <div class="changelog-version-group">
+            <div class="changelog-version-header">
+              <span class="changelog-version-num">v202605231900</span>
+              <span class="changelog-version-date">2026. 05. 23 (현재)</span>
+            </div>
+            <ul class="changelog-items">
+              <li class="changelog-item"><strong>오 마이 밴드(Oh My Band) 리얼 드럼 및 5레인 리듬게임 런칭</strong>: 단일 악기 피아노 연습기에서 피아노와 드럼을 함께 다루는 '오 마이 밴드' 멀티 악기 플랫폼으로 전면 브랜딩 개편. 로비 상단 악기 선택 탭, 반응형 3D 가상 드럼 키트 인터페이스, 가로 스크롤형 5개 전용 레인 드럼 리듬게임 엔진 도입.</li>
+              <li class="changelog-item"><strong>드럼 대기/템포 2가지 연습 모드 완벽 탑재</strong>: 판정선에 도달한 노트를 직접 입력할 때까지 화면이 일시정지해 주는 초보자용 '대기 연습' 및 실제 BPM 템포와 Perfect/Great/Good/Miss 실시간 판정이 적용되는 '템포 연습' 탑재.</li>
+              <li class="changelog-item"><strong>이중 오디오 엔진 및 MIDI 전자드럼 연동</strong>: 고품질 드럼 샘플 자동 프리로딩 및 로딩 실패/오프라인 시 즉각 구동되는 자바스크립트 Web Audio API 신디사이저 탑재. MIDI 전자드럼 및 MIDI 건반 기기 타격 시 표준 킥, 스네어, 하이햇, 탐, 크래쉬 노트를 감지하는 고성능 매핑 모듈 완성.</li>
+            </ul>
+          </div>
+
           <!-- v202605231525 -->
           <div class="changelog-version-group">
             <div class="changelog-version-header">
               <span class="changelog-version-num">v202605231525</span>
-              <span class="changelog-version-date">2026. 05. 23 (현재)</span>
+              <span class="changelog-version-date">2026. 05. 23</span>
             </div>
             <ul class="changelog-items">
               <li class="changelog-item"><strong>악보 마디 균등 분배 및 마지막 줄 너비 정규화</strong>: 마디가 줄마다 불균등하게 배분되고 마지막 줄만 짧게 표시되던 문제를 해결. abcjs wrap 엔진(줄당 4마디 균등 배분)과 stretchlast 옵션을 도입하여 모든 줄이 동일한 전체 너비를 채우고, 각 마디의 폭이 균일하게 정렬되는 정제된 악보 레이아웃 구현.</li>

@@ -7,12 +7,22 @@ import { MidiInterface } from './js/midiInterface.js';
 import { AudioVisualizer } from './js/visualizer.js';
 import { SheetMusicController } from './js/sheetMusic.js';
 
+// Oh My Band Imports
+import { DRUM_SONGS } from './js/drumSongs.js';
+import { DrumAudio } from './js/drumAudio.js';
+import { DrumEngine } from './js/drumEngine.js';
+
 class App {
   constructor() {
     this.currentSong = null;
     this.inputSource = "mic"; // 'mic' or 'midi'
     this.practiceMode = "wait"; // 'wait' or 'tempo'
     this.isMetronomeSoundOn = true;
+    
+    // Oh My Band properties
+    this.currentInstrument = "piano"; // "piano" or "drum"
+    this.drumAudio = new DrumAudio();
+    this.drumEngine = null;
     
     // Components
     this.pianoRoll = null;
@@ -55,6 +65,14 @@ class App {
       onSongFinished: (stats) => this.handleSongFinished(stats),
       onMetronomeTick: (tick) => this.handleMetronomeTick(tick),
       onDemoPlayNote: (midi, durationMs) => this.handleDemoPlayNote(midi, durationMs)
+    });
+    
+    // Setup Drum engine with callbacks
+    this.drumEngine = new DrumEngine("drum-canvas", this.drumAudio, {
+      onTargetChanged: (targetNote) => this.handleTargetNoteChanged(targetNote),
+      onStatsChanged: (acc, progStr, progPercent) => this.handleStatsChanged(acc, progStr, progPercent),
+      onSongFinished: (stats) => this.handleSongFinished(stats),
+      onMetronomeTick: (tick) => this.handleMetronomeTick(tick)
     });
     
     // MIDI device updates
@@ -140,6 +158,14 @@ class App {
     // Sheet Music Centered Header
     this.sheetSongTitle = document.getElementById("sheet-song-title");
     this.sheetSongComposer = document.getElementById("sheet-song-composer");
+
+    // Oh My Band UI Elements
+    this.instrumentTabs = document.querySelector(".instrument-tabs-container");
+    this.customSongBox = document.querySelector(".custom-song-box");
+    this.pianoPracticeArea = document.querySelector(".sheet-music-outer");
+    this.pianoRollCard = document.querySelector(".piano-roll-card");
+    this.drumPracticeArea = document.getElementById("drum-practice-area");
+    this.drumTipsGroup = document.getElementById("drum-tips-group");
   }
 
   initViews() {
@@ -148,6 +174,31 @@ class App {
   }
 
   bindEvents() {
+    // Oh My Band: Instrument switching tabs listener
+    if (this.instrumentTabs) {
+      this.instrumentTabs.addEventListener("click", (e) => {
+        const tab = e.target.closest(".instrument-tab");
+        if (!tab) return;
+        
+        this.instrumentTabs.querySelectorAll(".instrument-tab").forEach(el => el.classList.remove("active"));
+        tab.classList.add("active");
+        
+        this.currentInstrument = tab.dataset.instrument;
+        this.handleInstrumentChanged();
+      });
+    }
+
+    // Oh My Band: Virtual Drum Kit pad clicks
+    const drumKit = document.getElementById("interactive-drum-kit");
+    if (drumKit) {
+      drumKit.addEventListener("mousedown", (e) => {
+        const pad = e.target.closest(".drum-pad");
+        if (!pad) return;
+        const type = pad.dataset.drum;
+        this.handleDrumHit(type);
+      });
+    }
+
     // Mode switcher (Wait vs Tempo)
     this.modeSelector.addEventListener("click", (e) => {
       const option = e.target.closest(".selector-option");
@@ -274,13 +325,15 @@ class App {
     this.tempoBPM.addEventListener("input", (e) => {
       const bpm = e.target.value;
       this.bpmVal.textContent = `${bpm} BPM`;
-      this.sheetController.setBPM(bpm);
+      if (this.sheetController) this.sheetController.setBPM(bpm);
+      if (this.drumEngine) this.drumEngine.bpm = Number(bpm);
     });
 
     // Audio Metronome Sound Toggle
     this.btnMetronomeSoundToggle.addEventListener("click", () => {
       this.isMetronomeSoundOn = !this.isMetronomeSoundOn;
-      this.sheetController.setMetronomeSound(this.isMetronomeSoundOn);
+      if (this.sheetController) this.sheetController.setMetronomeSound(this.isMetronomeSoundOn);
+      if (this.drumEngine) this.drumEngine.isMetronomeSoundOn = this.isMetronomeSoundOn;
       this.btnMetronomeSoundToggle.textContent = this.isMetronomeSoundOn ? "🔊" : "🔇";
       this.btnMetronomeSoundToggle.className = this.isMetronomeSoundOn ? "btn-icon-toggle" : "btn-icon-toggle muted";
     });
@@ -295,17 +348,39 @@ class App {
       this.toggleMetronome();
     });
 
-    // Keyboard space bar triggers play/pause metronome (prevent when result or changelog modal is open)
+    // Keyboard keys mappings for Drum and Piano practice
     window.addEventListener("keydown", (e) => {
-      if (e.code === "Space" && this.practiceView.classList.contains("active")) {
-        const isResultOpen = this.resultModal && !this.resultModal.classList.contains("hidden");
-        const isChangelogOpen = this.changelogModal && !this.changelogModal.classList.contains("hidden");
+      if (!this.practiceView.classList.contains("active")) return;
+      
+      const isResultOpen = this.resultModal && !this.resultModal.classList.contains("hidden");
+      const isChangelogOpen = this.changelogModal && !this.changelogModal.classList.contains("hidden");
+      if (isResultOpen || isChangelogOpen) {
+        return; // Ignore keys when modal is showing
+      }
+
+      if (this.currentInstrument === "drum") {
+        // Drum keys map
+        const drumKeys = {
+          "Space": "kick",
+          "KeyS": "hihat",
+          "KeyD": "snare",
+          "KeyJ": "tom",
+          "KeyK": "crash"
+        };
         
-        if (isResultOpen || isChangelogOpen) {
-          return; // Ignore space key when modal is showing
+        if (drumKeys[e.code] !== undefined) {
+          e.preventDefault();
+          this.handleDrumHit(drumKeys[e.code]);
+        } else if (e.code === "Enter") {
+          e.preventDefault();
+          this.toggleMetronome();
         }
-        e.preventDefault();
-        this.toggleMetronome();
+      } else {
+        // Piano: Space triggers metronome play/pause
+        if (e.code === "Space") {
+          e.preventDefault();
+          this.toggleMetronome();
+        }
       }
     });
 
@@ -348,9 +423,11 @@ class App {
 
   loadPresetSongsList() {
     this.songsListContainer.innerHTML = "";
-    document.getElementById("song-count-badge").textContent = `${PRESET_SONGS.length} 곡 로드됨`;
     
-    PRESET_SONGS.forEach(song => {
+    const songs = this.currentInstrument === "piano" ? PRESET_SONGS : DRUM_SONGS;
+    document.getElementById("song-count-badge").textContent = `${songs.length} 곡 로드됨`;
+    
+    songs.forEach(song => {
       const item = document.createElement("div");
       item.classList.add("song-item");
       item.addEventListener("click", () => this.startPractice(song));
@@ -368,6 +445,64 @@ class App {
       `;
       this.songsListContainer.appendChild(item);
     });
+  }
+
+  handleInstrumentChanged() {
+    // Stop all active sessions
+    this.stopPractice();
+    
+    // Rebuild songs list
+    this.loadPresetSongsList();
+
+    const titleLogo = document.querySelector(".logo-text");
+    if (this.currentInstrument === "piano") {
+      if (titleLogo) titleLogo.textContent = "Oh My Band";
+      this.customSongBox.style.display = "block";
+      this.sourceSelector.parentElement.style.display = "block";
+      this.drumTipsGroup.style.display = "none";
+      
+      // Update visualizer color
+      if (this.visualizer) this.visualizer.setGlowColor(this.inputSource);
+
+      if (this.inputSource === "mic") {
+        this.micConfigGroup.style.display = "flex";
+        this.midiConfigGroup.style.display = "none";
+        this.setupMicrophone(true);
+      } else {
+        this.micConfigGroup.style.display = "none";
+        this.midiConfigGroup.style.display = "flex";
+        this.setupMidi();
+      }
+    } else {
+      // Drum mode
+      if (titleLogo) titleLogo.textContent = "Oh My Band";
+      this.customSongBox.style.display = "none";
+      this.sourceSelector.parentElement.style.display = "none";
+      this.micConfigGroup.style.display = "none";
+      this.midiConfigGroup.style.display = "none";
+      this.drumTipsGroup.style.display = "block";
+      
+      if (this.visualizer) this.visualizer.setGlowColor("drum");
+
+      // Initialize/Preload Drum Samples
+      this.drumAudio.preloadSamples();
+      
+      // Keep MIDI connection active for Electronic Drums!
+      this.setupMidi();
+    }
+  }
+
+  handleDrumHit(type) {
+    if (this.drumEngine) {
+      this.drumEngine.hit(type);
+    }
+    
+    // Trigger visual highlight on the virtual pad
+    const pad = document.querySelector(`.drum-pad.pad-${type}`);
+    if (pad) {
+      pad.classList.add("active");
+      setTimeout(() => pad.classList.remove("active"), 80);
+    }
   }
 
   // --- Input Setup & Control ---
@@ -523,26 +658,52 @@ class App {
   }
 
   handleMidiNoteOn(noteNumber, velocity) {
-    this.pianoRoll.playSynthSound(noteNumber);
-    this.handlePlayedNote(noteNumber);
+    if (this.currentInstrument === "drum") {
+      const midiDrumMap = {
+        35: "kick", 36: "kick",
+        38: "snare", 40: "snare",
+        42: "hihat", 44: "hihat", 46: "hihat",
+        41: "tom", 43: "tom", 45: "tom", 47: "tom", 48: "tom",
+        49: "crash", 57: "crash"
+      };
+      const drumType = midiDrumMap[noteNumber];
+      if (drumType) {
+        this.handleDrumHit(drumType);
+      }
+    } else {
+      this.pianoRoll.playSynthSound(noteNumber);
+      this.handlePlayedNote(noteNumber);
+    }
   }
 
   handleMidiNoteOff(noteNumber) {
-    this.pianoRoll.stopSynthSound(noteNumber);
-    this.pianoRoll.releasePlay(noteNumber);
+    if (this.currentInstrument === "piano") {
+      this.pianoRoll.stopSynthSound(noteNumber);
+      this.pianoRoll.releasePlay(noteNumber);
+    }
   }
 
   // --- Sheet Music callbacks ---
 
   handleTargetNoteChanged(targetNote) {
-    if (targetNote) {
-      this.targetNoteName.textContent = targetNote.name;
-      this.targetNoteInfo.textContent = `(MIDI 번호: ${targetNote.midi})`;
-      this.pianoRoll.highlightTarget(targetNote.midi);
+    if (this.currentInstrument === "drum") {
+      if (targetNote) {
+        this.targetNoteName.textContent = targetNote.name;
+        this.targetNoteInfo.textContent = "(단축키 연주)";
+      } else {
+        this.targetNoteName.textContent = "곡 완료! 🎉";
+        this.targetNoteInfo.textContent = "";
+      }
     } else {
-      this.targetNoteName.textContent = "곡 완료! 🎉";
-      this.targetNoteInfo.textContent = "";
-      this.pianoRoll.clearTargets();
+      if (targetNote) {
+        this.targetNoteName.textContent = targetNote.name;
+        this.targetNoteInfo.textContent = `(MIDI 번호: ${targetNote.midi})`;
+        this.pianoRoll.highlightTarget(targetNote.midi);
+      } else {
+        this.targetNoteName.textContent = "곡 완료! 🎉";
+        this.targetNoteInfo.textContent = "";
+        this.pianoRoll.clearTargets();
+      }
     }
   }
 
@@ -665,7 +826,7 @@ class App {
   startPractice(song) {
     this.currentSong = song;
     
-    if (this.inputSource === "mic") {
+    if (this.currentInstrument === "piano" && this.inputSource === "mic") {
       this.setupMicrophone(false); // Automated/silent retry on song start
     } else {
       this.setupMidi();
@@ -689,26 +850,54 @@ class App {
     this.tempoBPM.value = song.tempo;
     this.bpmVal.textContent = `${song.tempo} BPM`;
     
-    // Set play buttons text appropriately
-    this.btnPlayPauseTempo.textContent = this.practiceMode === "wait" ? "▶ 메트로놈 시작 (Space)" : "▶ 연습 시작 (Space)";
-    this.btnPlayPauseTempo.className = "btn btn-primary";
+    if (this.currentInstrument === "drum") {
+      // Hide Piano, Show Drum Practice Area
+      this.pianoPracticeArea.style.display = "none";
+      this.pianoRollCard.style.display = "none";
+      this.drumPracticeArea.classList.add("active");
+      if (this.btnDemoAutoplay) this.btnDemoAutoplay.style.display = "none";
 
-    // Update Centered Sheet Music Header (always centered relative to the screen width)
-    if (this.sheetSongTitle) this.sheetSongTitle.textContent = song.title;
-    if (this.sheetSongComposer) this.sheetSongComposer.textContent = song.composer || "Traditional";
+      // Set play buttons text appropriately (Enter is used for drums instead of Space)
+      this.btnPlayPauseTempo.textContent = this.practiceMode === "wait" ? "▶ 메트로놈 시작 (Enter)" : "▶ 연습 시작 (Enter)";
+      this.btnPlayPauseTempo.className = "btn btn-primary";
 
-    // Start practice rendering
-    this.sheetController.setMode(this.practiceMode);
-    this.sheetController.setBPM(song.tempo);
-    this.sheetController.setMetronomeSound(this.isMetronomeSoundOn);
-    this.sheetController.render(song.abc);
+      // Start drum rendering
+      this.drumEngine.loadSong(song, this.practiceMode, song.tempo, this.isMetronomeSoundOn);
+    } else {
+      // Show Piano, Hide Drum Practice Area
+      this.pianoPracticeArea.style.display = "block";
+      this.pianoRollCard.style.display = "block";
+      this.drumPracticeArea.classList.remove("active");
+      if (this.btnDemoAutoplay) this.btnDemoAutoplay.style.display = "inline-block";
+
+      // Set play buttons text appropriately
+      this.btnPlayPauseTempo.textContent = this.practiceMode === "wait" ? "▶ 메트로놈 시작 (Space)" : "▶ 연습 시작 (Space)";
+      this.btnPlayPauseTempo.className = "btn btn-primary";
+
+      // Update Centered Sheet Music Header
+      if (this.sheetSongTitle) this.sheetSongTitle.textContent = song.title;
+      if (this.sheetSongComposer) this.sheetSongComposer.textContent = song.composer || "Traditional";
+
+      // Start piano practice rendering
+      this.sheetController.setMode(this.practiceMode);
+      this.sheetController.setBPM(song.tempo);
+      this.sheetController.setMetronomeSound(this.isMetronomeSoundOn);
+      this.sheetController.render(song.abc);
+    }
   }
 
   stopPractice() {
-    this.sheetController.stopMetronome();
-    this.sheetController.stopDemoPlay();
+    if (this.sheetController) {
+      this.sheetController.stopMetronome();
+      this.sheetController.stopDemoPlay();
+    }
+    if (this.drumEngine) {
+      this.drumEngine.stop();
+    }
     this.stopMicrophone();
-    this.pianoRoll.clearTargets();
+    if (this.pianoRoll) {
+      this.pianoRoll.clearTargets();
+    }
     
     if (this.btnDemoAutoplay) {
       this.btnDemoAutoplay.textContent = "▶ 악보 자동 연주";
@@ -733,29 +922,47 @@ class App {
     this.practiceView.classList.remove("active");
     this.lobbyView.classList.remove("hidden");
     
-    if (this.inputSource === "mic") {
-      this.setupMicrophone(false); // Silent check when returning to lobby
+    if (this.currentInstrument === "piano") {
+      if (this.inputSource === "mic") {
+        this.setupMicrophone(false); // Silent check when returning to lobby
+      } else {
+        this.setupMidi();
+      }
     } else {
-      this.setupMidi();
+      this.setupMidi(); // Keep MIDI listening active in Lobby
     }
   }
 
   toggleMetronome() {
-    if (this.sheetController.isDemoPlaying) {
-      this.toggleDemoAutoplay();
-    }
-    
-    if (this.sheetController.isMetronomePlaying) {
-      this.sheetController.stopMetronome();
-      this.btnPlayPauseTempo.textContent = this.practiceMode === "wait" ? "▶ 메트로놈 시작 (Space)" : "▶ 연습 시작 (Space)";
-      this.btnPlayPauseTempo.className = "btn btn-primary";
+    if (this.currentInstrument === "drum") {
+      if (this.drumEngine.isPlaying) {
+        this.drumEngine.pause();
+        this.btnPlayPauseTempo.textContent = this.practiceMode === "wait" ? "▶ 메트로놈 시작 (Enter)" : "▶ 연습 시작 (Enter)";
+        this.btnPlayPauseTempo.className = "btn btn-primary";
+      } else {
+        // Resume AudioContext in case of browser restrictions
+        this.drumAudio.resume();
+        this.drumEngine.start();
+        this.btnPlayPauseTempo.textContent = this.practiceMode === "wait" ? "⏸ 메트로놈 정지 (Enter)" : "⏸ 연습 정지 (Enter)";
+        this.btnPlayPauseTempo.className = "btn btn-secondary";
+      }
     } else {
-      // Lazy init AudioContext inside virtual keyboard to avoid browser blocking
-      this.pianoRoll.lazyInitAudio();
+      if (this.sheetController.isDemoPlaying) {
+        this.toggleDemoAutoplay();
+      }
       
-      this.sheetController.startMetronome();
-      this.btnPlayPauseTempo.textContent = this.practiceMode === "wait" ? "⏸ 메트로놈 정지 (Space)" : "⏸ 연습 정지 (Space)";
-      this.btnPlayPauseTempo.className = "btn btn-secondary";
+      if (this.sheetController.isMetronomePlaying) {
+        this.sheetController.stopMetronome();
+        this.btnPlayPauseTempo.textContent = this.practiceMode === "wait" ? "▶ 메트로놈 시작 (Space)" : "▶ 연습 시작 (Space)";
+        this.btnPlayPauseTempo.className = "btn btn-primary";
+      } else {
+        // Lazy init AudioContext inside virtual keyboard to avoid browser blocking
+        this.pianoRoll.lazyInitAudio();
+        
+        this.sheetController.startMetronome();
+        this.btnPlayPauseTempo.textContent = this.practiceMode === "wait" ? "⏸ 메트로놈 정지 (Space)" : "⏸ 연습 정지 (Space)";
+        this.btnPlayPauseTempo.className = "btn btn-secondary";
+      }
     }
   }
 
