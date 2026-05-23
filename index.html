@@ -5,8 +5,8 @@
     <link rel="icon" type="image/svg+xml" href="/letspiano/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Oh My Piano 🎹</title>
-    <script type="module" crossorigin src="/letspiano/assets/index-BUx1-ojd.js"></script>
-    <link rel="stylesheet" crossorigin href="/letspiano/assets/index-CZiNry2j.css">
+    <script type="module" crossorigin src="/letspiano/assets/index-DYDvkXZI.js"></script>
+    <link rel="stylesheet" crossorigin href="/letspiano/assets/index-oy2ZXOon.css">
   </head>
   <body>
     <div class="container">
@@ -225,6 +225,45 @@
 
       </div>
 
+    </div>
+
+    <!-- 연주 완료 결과 글래스모피즘 모달 -->
+    <div id="result-modal" class="modal-overlay hidden">
+      <div class="glass-card modal-content">
+        <div class="modal-header">
+          <span class="modal-crown">👑</span>
+          <h2>연습 완료!</h2>
+          <p id="modal-song-composer" class="modal-composer"></p>
+        </div>
+        <div class="modal-body">
+          <div class="result-rank-wrapper">
+            <div id="modal-rank" class="rank-badge rank-s">S</div>
+            <div class="rank-label">GRADE</div>
+          </div>
+          <div class="modal-stats-grid">
+            <div class="modal-stat-item">
+              <span class="stat-lbl">연주한 곡</span>
+              <span id="modal-song-title" class="stat-val-text"></span>
+            </div>
+            <div class="modal-stat-item">
+              <span class="stat-lbl">최종 정확도</span>
+              <span id="modal-accuracy" class="stat-val-num text-green">0%</span>
+            </div>
+            <div class="modal-stat-item">
+              <span class="stat-lbl">진행도</span>
+              <span id="modal-progress" class="stat-val-num text-cyan">0 / 0</span>
+            </div>
+            <div class="modal-stat-item">
+              <span class="stat-lbl">연습 모드</span>
+              <span id="modal-practice-mode" class="stat-val-text"></span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button id="btn-modal-retry" class="btn btn-primary">🔄 다시 연습</button>
+          <button id="btn-modal-lobby" class="btn btn-secondary">🏠 로비로 이동</button>
+        </div>
+      </div>
     </div>
 
     <!-- main.js 스크립트 연결 -->
