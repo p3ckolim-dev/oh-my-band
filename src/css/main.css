@@ -515,16 +515,23 @@ textarea:focus {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.95); /* We need a bright background for sheet music so classical notation is readable, or standard CSS variables */
-  color: #000;
+  background: #faf9f6; /* Elegant warm cream paper tone, highly readable & easy on the eyes */
+  color: #111111;
   border-radius: 16px;
   padding: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
   overflow-x: auto;
+  transition: var(--transition-smooth);
+}
+
+body.light-theme .sheet-music-card {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.06);
 }
 
 .sheet-music-card .panel-title {
-  color: #111;
+  color: #111111;
 }
 
 #sheet-music-container {
@@ -1162,4 +1169,258 @@ body.light-theme .boundary-badge {
   font-size: 13px;
   font-weight: 700;
 }
+
+/* ==========================================================================
+   High-Fidelity Glassmorphism Result Modal
+   ========================================================================== */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(5, 5, 8, 0.65);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), visibility 0.4s;
+}
+
+.modal-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.modal-content {
+  width: 90%;
+  max-width: 460px;
+  background: rgba(26, 29, 48, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 
+    0 24px 50px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  border-radius: 24px;
+  padding: 36px 32px 32px 32px;
+  text-align: center;
+  transform: scale(1);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: modalSlideIn 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+body.light-theme .modal-content {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 
+    0 24px 50px rgba(15, 23, 42, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.modal-overlay.hidden .modal-content {
+  transform: scale(0.9);
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-crown {
+  font-size: 32px;
+  display: inline-block;
+  animation: crownBounce 2.5s infinite ease-in-out;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.5));
+}
+
+@keyframes crownBounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(5deg); }
+}
+
+.modal-header h2 {
+  font-size: 28px;
+  font-weight: 800;
+  margin-top: 8px;
+  margin-bottom: 4px;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--text-primary) 30%, var(--accent-cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+body.light-theme .modal-header h2 {
+  background: linear-gradient(135deg, var(--text-primary) 30%, var(--accent-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.modal-composer {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 24px;
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.result-rank-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 130px;
+  height: 130px;
+}
+
+.rank-badge {
+  font-size: 64px;
+  font-weight: 900;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 4px 10px rgba(0,0,0,0.25);
+  animation: rankPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.rank-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+@keyframes rankPop {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Rank Custom Color Skins */
+.rank-badge.rank-s {
+  background: radial-gradient(circle, #05ffd3 0%, #00bc8c 100%);
+  color: #032a1f;
+  box-shadow: 
+    0 0 25px rgba(5, 255, 211, 0.45),
+    inset 0 2px 2px rgba(255,255,255,0.4);
+}
+
+.rank-badge.rank-a {
+  background: radial-gradient(circle, #00f0ff 0%, #0072ff 100%);
+  color: #001a35;
+  box-shadow: 
+    0 0 25px rgba(0, 240, 255, 0.45),
+    inset 0 2px 2px rgba(255,255,255,0.4);
+}
+
+.rank-badge.rank-b {
+  background: radial-gradient(circle, #ffaa00 0%, #ff7b00 100%);
+  color: #2b1100;
+  box-shadow: 
+    0 0 25px rgba(255, 123, 0, 0.45),
+    inset 0 2px 2px rgba(255,255,255,0.4);
+}
+
+.rank-badge.rank-c {
+  background: radial-gradient(circle, #b833ff 0%, #8a2be2 100%);
+  color: #1a0033;
+  box-shadow: 
+    0 0 25px rgba(138, 43, 226, 0.45),
+    inset 0 2px 2px rgba(255,255,255,0.4);
+}
+
+.rank-badge.rank-d {
+  background: radial-gradient(circle, #ff5e80 0%, #ff3366 100%);
+  color: #33000a;
+  box-shadow: 
+    0 0 25px rgba(255, 51, 102, 0.45),
+    inset 0 2px 2px rgba(255,255,255,0.4);
+}
+
+/* Modal Stats Grid */
+.modal-stats-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.modal-stat-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+body.light-theme .modal-stat-item {
+  background: rgba(15, 23, 42, 0.02);
+  border: 1px solid rgba(15, 23, 42, 0.05);
+}
+
+.modal-stat-item .stat-lbl {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.modal-stat-item .stat-val-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.modal-stat-item .stat-val-num {
+  font-size: 20px;
+  font-weight: 700;
+  font-family: monospace;
+}
+
+/* Modal Actions */
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.modal-actions .btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  justify-content: center;
+}
+
 

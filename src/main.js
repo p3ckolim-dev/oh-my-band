@@ -120,6 +120,18 @@ class App {
     this.btnDemoAutoplay = document.getElementById("btn-demo-autoplay");
     this.btnPlayPauseTempo = document.getElementById("btn-play-pause-tempo");
     this.metroLight = document.getElementById("metro-light");
+
+    // Result Modal
+    this.resultModal = document.getElementById("result-modal");
+    this.modalCrown = this.resultModal.querySelector(".modal-crown");
+    this.modalSongComposer = document.getElementById("modal-song-composer");
+    this.modalRank = document.getElementById("modal-rank");
+    this.modalSongTitle = document.getElementById("modal-song-title");
+    this.modalAccuracy = document.getElementById("modal-accuracy");
+    this.modalProgress = document.getElementById("modal-progress");
+    this.modalPracticeMode = document.getElementById("modal-practice-mode");
+    this.btnModalRetry = document.getElementById("btn-modal-retry");
+    this.btnModalLobby = document.getElementById("btn-modal-lobby");
   }
 
   initViews() {
@@ -275,12 +287,28 @@ class App {
       this.toggleMetronome();
     });
 
-    // Keyboard space bar triggers play/pause metronome
+    // Keyboard space bar triggers play/pause metronome (prevent when result modal is open)
     window.addEventListener("keydown", (e) => {
       if (e.code === "Space" && this.practiceView.classList.contains("active")) {
+        if (this.resultModal && !this.resultModal.classList.contains("hidden")) {
+          return; // Ignore space key when result modal is showing
+        }
         e.preventDefault();
         this.toggleMetronome();
       }
+    });
+
+    // Result Modal buttons
+    this.btnModalRetry.addEventListener("click", () => {
+      this.resultModal.classList.add("hidden");
+      if (this.currentSong) {
+        this.startPractice(this.currentSong);
+      }
+    });
+
+    this.btnModalLobby.addEventListener("click", () => {
+      this.resultModal.classList.add("hidden");
+      this.stopPractice();
     });
   }
 
@@ -499,22 +527,96 @@ class App {
   }
 
   handleSongFinished(stats) {
+    // Reset play buttons text and icons
     if (stats.isDemo) {
       this.btnDemoAutoplay.textContent = "▶ 악보 자동 연주";
       this.btnDemoAutoplay.className = "btn btn-secondary";
       this.btnDemoAutoplay.style.color = "var(--accent-cyan)";
       this.btnDemoAutoplay.style.borderColor = "var(--accent-cyan)";
-      
-      alert("🎉 곡 자동 연주(데모)가 완료되었습니다!");
-      this.stopPractice();
-      return;
+    } else {
+      this.btnPlayPauseTempo.textContent = this.practiceMode === "wait" ? "▶ 연습 시작 (Space)" : "▶ 연습 시작 (Space)";
+      this.btnPlayPauseTempo.className = "btn btn-primary";
     }
 
-    this.btnPlayPauseTempo.textContent = this.practiceMode === "wait" ? "▶ 연습 시작 (Space)" : "▶ 연습 시작 (Space)";
-    this.btnPlayPauseTempo.className = "btn btn-primary";
+    // Stop microphone, metronome, and playbacks immediately to prevent background sound/processing
+    this.sheetController.stopMetronome();
+    this.sheetController.stopDemoPlay();
+    this.stopMicrophone();
+    this.pianoRoll.clearTargets();
+
+    // Trigger the premium glassmorphic modal instead of native alert()
+    this.showResultModal(stats);
+  }
+
+  showResultModal(stats) {
+    const accuracy = stats.accuracy;
+    const totalNotes = stats.totalNotes;
+    const isDemo = stats.isDemo || false;
+
+    // Determine Rating Rank based on exact accuracy thresholds
+    let rank = "D";
+    let rankClass = "rank-d";
+    let accuracyColorClass = "stat-val-num text-red";
+
+    if (accuracy >= 95) {
+      rank = "S";
+      rankClass = "rank-s";
+      accuracyColorClass = "stat-val-num text-green";
+    } else if (accuracy >= 90) {
+      rank = "A";
+      rankClass = "rank-a";
+      accuracyColorClass = "stat-val-num text-green";
+    } else if (accuracy >= 75) {
+      rank = "B";
+      rankClass = "rank-b";
+      accuracyColorClass = "stat-val-num text-orange";
+    } else if (accuracy >= 60) {
+      rank = "C";
+      rankClass = "rank-c";
+      accuracyColorClass = "stat-val-num text-cyan";
+    }
+
+    // Display appropriate high-fidelity crown emoji/glow
+    if (rank === "S") {
+      this.modalCrown.textContent = "👑";
+      this.modalCrown.style.display = "inline-block";
+    } else if (rank === "A" || rank === "B") {
+      this.modalCrown.textContent = "✨";
+      this.modalCrown.style.display = "inline-block";
+    } else {
+      this.modalCrown.style.display = "none";
+    }
+
+    // Setup visual header text content
+    const titleText = isDemo ? "연주 감상 완료!" : "연습 완료! 🎉";
+    this.resultModal.querySelector(".modal-header h2").textContent = titleText;
+
+    if (this.currentSong) {
+      this.modalSongTitle.textContent = this.currentSong.title;
+      this.modalSongComposer.textContent = `Composer: ${this.currentSong.composer || "Unknown"}`;
+    } else {
+      this.modalSongTitle.textContent = "나의 커스텀 연습곡";
+      this.modalSongComposer.textContent = "나의 피아노 연습";
+    }
+
+    // Dynamic rating badge
+    this.modalRank.textContent = rank;
+    this.modalRank.className = `rank-badge ${rankClass}`;
     
-    alert(`🎉 곡을 모두 연주하셨습니다!\n최종 정확도: ${stats.accuracy}%`);
-    this.stopPractice();
+    // Exact accuracy level display
+    this.modalAccuracy.textContent = `${accuracy}%`;
+    this.modalAccuracy.className = accuracyColorClass;
+
+    // Correct hit note mapping
+    const correctCount = Math.round((accuracy / 100) * totalNotes);
+    this.modalProgress.textContent = `${correctCount} / ${totalNotes}`;
+
+    // Mode specific display
+    const modeText = this.practiceMode === "wait" ? "대기 연습 (Wait)" : "템포 연습 (Tempo)";
+    this.modalPracticeMode.textContent = isDemo ? "자동 연주 (Demo)" : modeText;
+
+    // Open Modal Overlay
+    this.resultModal.classList.remove("hidden");
   }
 
   handleMetronomeTick(tickIndex) {
