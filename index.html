@@ -5,8 +5,8 @@
     <link rel="icon" type="image/svg+xml" href="/letspiano/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Oh My Piano 🎹</title>
-    <script type="module" crossorigin src="/letspiano/assets/index-DgtfQ5XS.js"></script>
-    <link rel="stylesheet" crossorigin href="/letspiano/assets/index-CFIaAAMh.css">
+    <script type="module" crossorigin src="/letspiano/assets/index-DHHO0fdi.js"></script>
+    <link rel="stylesheet" crossorigin href="/letspiano/assets/index-kGhoiuVd.css">
   </head>
   <body>
     <div class="container">
@@ -17,7 +17,7 @@
           <h1>
             <span class="logo-icon">🎹</span> 
             <span class="logo-text">Oh My Piano</span>
-            <span id="header-version" class="version-chip" title="업데이트 히스토리 보기">v202605231508</span>
+            <span id="header-version" class="version-chip" title="업데이트 히스토리 보기">v202605231513</span>
             <span id="header-mode-badge" class="mode-chip" style="display: none;">대기 연습</span>
             <span id="header-song-title" class="song-chip" style="display: none;">반짝반짝 작은 별</span>
           </h1>
@@ -202,6 +202,11 @@
 
           <!-- 실제 악보 카드 -->
           <div class="glass-card sheet-music-card">
+            <!-- 악보 헤더 (고정 센터 정렬 밸런스) -->
+            <div id="sheet-music-header" class="sheet-music-header">
+              <h3 id="sheet-song-title">반짝반짝 작은 별</h3>
+              <span id="sheet-song-composer">프랑스 민요</span>
+            </div>
             <!-- 템포 재생 중 흘러가는 세로막대 커서선 -->
             <div id="playback-cursor" class="playback-cursor"></div>
             <div id="sheet-music-container">
@@ -276,11 +281,22 @@
         </div>
         <div class="modal-body changelog-list">
           
+          <!-- v202605231513 -->
+          <div class="changelog-version-group">
+            <div class="changelog-version-header">
+              <span class="changelog-version-num">v202605231513</span>
+              <span class="changelog-version-date">2026. 05. 23 (현재)</span>
+            </div>
+            <ul class="changelog-items">
+              <li class="changelog-item"><strong>악보 타이틀 센터 정렬 밸런스 개선</strong>: 스크롤 시 화면 밖으로 흘러가거나 우측 쏠림이 발생하는 SVG 내부 타이틀을 완전히 숨기고, 화면 중앙 고정형 HTML 헤더(#sheet-music-header)를 주입해 대칭 시각 밸런스 최적화.</li>
+            </ul>
+          </div>
+
           <!-- v202605231508 -->
           <div class="changelog-version-group">
             <div class="changelog-version-header">
               <span class="changelog-version-num">v202605231508</span>
-              <span class="changelog-version-date">2026. 05. 23 (현재)</span>
+              <span class="changelog-version-date">2026. 05. 23</span>
             </div>
             <ul class="changelog-items">
               <li class="changelog-item"><strong>악보 너비 대폭 확장</strong>: 가로폭 최소 1300px 스케일 업 및 모바일/노트북 화면에서의 강제 뭉개짐 해소.</li>
