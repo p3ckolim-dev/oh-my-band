@@ -82,8 +82,8 @@ export class SheetMusicController {
       responsive: "resize", // Stretch and scale beautifully matching the parent card's width
       add_classes: true,
       scale: 1.25, // Rich, crisp legibility scale for perfect reading distance
-      paddingright: 0, // Utilize the full card margins
-      paddingleft: 0,
+      paddingright: 40, // Elegant 40px right margin for classical breathing room
+      paddingleft: 40,  // Elegant 40px left margin for classical breathing room
       staffwidth: staffWidth
     });
 
