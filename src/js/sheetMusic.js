@@ -84,7 +84,13 @@ export class SheetMusicController {
       scale: 1.25, // Rich, crisp legibility scale for perfect reading distance
       paddingright: 40, // Elegant 40px right margin for classical breathing room
       paddingleft: 40,  // Elegant 40px left margin for classical breathing room
-      staffwidth: staffWidth
+      staffwidth: staffWidth,
+      stretchlast: 1, // Stretch last line to match the full width of preceding staff lines
+      wrap: {
+        minSpacing: 1.5,  // Minimum spacing factor per note
+        maxSpacing: 3.0,  // Maximum spacing factor per note
+        preferredMeasuresPerLine: 4 // Even 4-measure distribution per line
+      }
     });
 
     // Parse the actual notes inside the generated tune object
