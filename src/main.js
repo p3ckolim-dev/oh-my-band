@@ -96,6 +96,7 @@ class App {
     this.practiceView = document.getElementById("practice-view");
     
     // Header elements
+    this.headerElement = document.querySelector("header");
     this.statusDot = document.getElementById("status-dot");
     this.statusText = document.getElementById("status-text");
     this.headerVersion = document.getElementById("header-version");
@@ -195,7 +196,7 @@ class App {
     // Oh My Band: Virtual Drum Kit pad clicks
     const drumKit = document.getElementById("interactive-drum-kit");
     if (drumKit) {
-      drumKit.addEventListener("mousedown", (e) => {
+      drumKit.addEventListener("pointerdown", (e) => {
         const pad = e.target.closest(".drum-pad");
         if (!pad) return;
         const type = pad.dataset.drum;
@@ -890,6 +891,7 @@ class App {
     this.practiceModeBadge.className = badgeClass;
     
     // Toggle header mode/song visibility
+    if (this.headerElement) this.headerElement.classList.add("in-practice");
     if (this.headerVersion) this.headerVersion.style.display = "none";
     if (this.practiceSongTitle) this.practiceSongTitle.style.display = "inline-block";
     if (this.practiceModeBadge) this.practiceModeBadge.style.display = "inline-block";
@@ -965,6 +967,7 @@ class App {
     }
     
     // Toggle header mode/song visibility back to lobby
+    if (this.headerElement) this.headerElement.classList.remove("in-practice");
     if (this.headerVersion) this.headerVersion.style.display = "inline-block";
     if (this.practiceSongTitle) this.practiceSongTitle.style.display = "none";
     if (this.practiceModeBadge) this.practiceModeBadge.style.display = "none";
