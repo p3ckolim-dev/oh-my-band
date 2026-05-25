@@ -86,17 +86,13 @@ body.drum-mode {
   box-shadow: 0 0 10px var(--accent-color);
 }
 
-/* Glassmorphism utility card */
-.glass-card {
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-top: 1px solid rgba(255, 255, 255, 0.08); /* Double border reflection highlight */
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+/* Solid premium utility card */
+.glass-card, .solid-card {
+  background: var(--bg-secondary);
+  border: 1px solid #1e293b;
+  border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 30px 0 rgba(0, 0, 0, 0.35);
   transition: var(--transition-smooth);
 }
 
@@ -104,37 +100,34 @@ body.drum-mode {
 .container {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 88px 24px 24px 24px; /* Push content down to clear fixed header */
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* Header - Floating Sticky Bar */
+/* Header - Solid Flat Fixed Bar */
 header {
-  position: sticky;
-  top: 16px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 1000;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 12px 24px;
-  margin-bottom: 24px;
+  height: 64px;
+  background: var(--bg-secondary); /* Solid background */
+  border-bottom: 1px solid #1e293b;
+  padding: 0 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
   transition: var(--transition-smooth);
 }
 
 /* Dynamic in-practice back-button indicator state */
 header.in-practice {
-  border-color: var(--accent-color);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 15px rgba(var(--accent-color), 0.15);
+  border-bottom: 1px solid var(--accent-color);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), 0 0 10px rgba(var(--accent-color), 0.1);
 }
 
 header.in-practice .logo-icon {
@@ -270,13 +263,36 @@ header.in-practice .logo-text {
 
 .practice-view {
   display: none;
-  flex-direction: column;
+  grid-template-columns: 2fr 1fr;
+  grid-template-areas:
+    "main-play side-control"
+    "instrument instrument";
   gap: 24px;
-  flex-grow: 1;
+  width: 100%;
 }
 
 .practice-view.active {
+  display: grid;
+}
+
+.practice-side-controls {
+  grid-area: side-control;
   display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.sheet-music-outer {
+  grid-area: main-play;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.piano-roll-card {
+  grid-area: instrument;
+  width: 100%;
 }
 
 .lobby-view.hidden {
@@ -718,13 +734,22 @@ body.light-theme .sheet-music-card {
 /* Feedback bar */
 .feedback-bar {
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  padding: 20px;
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid #1e293b;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.feedback-left, .feedback-right {
+  display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 18px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid var(--glass-border);
-  font-size: 14px;
+  width: 100%;
 }
 
 .feedback-left {
@@ -1124,34 +1149,61 @@ body.light-theme .btn-header-action:hover {
 }
 
 /* Consolidated Practice Control Bar */
+/* Consolidated Practice Control Bar - DAW Sidebar format */
 .practice-control-bar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 24px;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 20px;
   gap: 20px;
-  flex-wrap: wrap;
+  background: var(--bg-secondary);
+  border: 1px solid #1e293b;
+  border-radius: 12px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .practice-control-bar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+  }
+}
+
+.practice-control-bar #btn-back-lobby {
+  width: 100%;
+}
+@media (min-width: 901px) {
+  .practice-control-bar #btn-back-lobby {
+    display: none; /* Hide redundant back button on desktop since header handles it */
   }
 }
 
 .metronome-control-group {
   display: flex;
-  align-items: center;
-  gap: 16px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--glass-border);
-  padding: 6px 16px;
-  border-radius: 12px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+  max-width: unset;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid #1e293b;
+  padding: 16px;
+  border-radius: 8px;
   flex-grow: 1;
-  max-width: 500px;
 }
+
+@media (max-width: 900px) {
+  .metronome-control-group {
+    flex-direction: row;
+    align-items: center;
+    max-width: 500px;
+    padding: 6px 16px;
+    border-radius: 12px;
+  }
+}
+
 body.light-theme .metronome-control-group {
   background: rgba(15, 23, 42, 0.02);
 }
@@ -1164,16 +1216,34 @@ body.light-theme .metronome-control-group {
 
 .bpm-slider-container {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-grow: 1;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .bpm-slider-container {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    flex-grow: 1;
+  }
 }
 
 .bpm-display {
   font-family: monospace;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   min-width: 65px;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .bpm-display {
+    font-size: 14px;
+    text-align: left;
+  }
 }
 
 .tempo-slider {
@@ -1210,16 +1280,26 @@ body.light-theme .btn-icon-toggle:hover {
 
 .practice-action-group {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .practice-action-group {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    width: auto;
+  }
 }
 
 .btn-autoplay {
-  min-width: 110px;
+  width: 100%;
 }
 
 .btn-play {
-  min-width: 140px;
+  width: 100%;
 }
 
 /* Border-Integrated HUD styles */
@@ -1856,25 +1936,36 @@ body.light-theme .changelog-item::before {
   }
   body.practice-active .container {
     height: 100dvh;
-    padding: 16px 24px;
+    padding: 88px 24px 24px 24px; /* Maintain fixed header offset */
     overflow: hidden;
     display: flex;
     flex-direction: column;
   }
   body.practice-active .practice-view {
     flex: 1;
-    height: calc(100% - 90px);
+    height: calc(100% - 20px);
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    grid-template-rows: 1fr auto;
+    grid-template-areas:
+      "main-play side-control"
+      "instrument instrument";
+    gap: 24px;
   }
   body.practice-active .sheet-music-card {
     min-height: 180px;
-    flex: 1;
+    height: 100%;
+    overflow-y: auto; /* Internal scroll if sheet music is very long */
   }
   body.practice-active .piano-keys-container {
     height: 140px; /* Highly optimized heights to fit on one screen */
+  }
+  body.practice-active .drum-canvas-card {
+    height: 100%;
+  }
+  body.practice-active #drum-practice-area.active {
+    display: contents; /* Ensure children act as grid cells of practice-view */
   }
 }
 

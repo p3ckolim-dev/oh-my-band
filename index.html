@@ -187,47 +187,50 @@
       <!-- 2. PRACTICE VIEW: 악보 및 실제 연습 화면 -->
       <div id="practice-view" class="practice-view">
         
-        <!-- 통합 연습 제어바 -->
-        <div class="glass-card practice-control-bar" id="tempo-control-panel">
-          <button id="btn-back-lobby" class="btn btn-secondary">
-            ⬅ 로비
-          </button>
-          
-          <!-- 메트로놈 제어 그룹 -->
-          <div class="metronome-control-group">
-            <div class="metronome-light-container">
-              <div class="metronome-light" id="metro-light"></div>
-            </div>
-            <div class="bpm-slider-container">
-              <span id="bpm-val" class="bpm-display text-orange">80 BPM</span>
-              <input type="range" id="tempo-bpm" min="40" max="200" value="80" class="tempo-slider" />
-            </div>
-            <button id="btn-metronome-sound-toggle" class="btn-icon-toggle" title="메트로놈 소리 켜기/끄기">
-              🔊
+        <!-- 연습 사이드 제어 영역 (Lobby의 제어판과 일치하는 구조) -->
+        <div class="practice-side-controls">
+          <!-- 통합 연습 제어바 -->
+          <div class="glass-card practice-control-bar" id="tempo-control-panel">
+            <button id="btn-back-lobby" class="btn btn-secondary">
+              ⬅ 로비
             </button>
+            
+            <!-- 메트로놈 제어 그룹 -->
+            <div class="metronome-control-group">
+              <div class="metronome-light-container">
+                <div class="metronome-light" id="metro-light"></div>
+              </div>
+              <div class="bpm-slider-container">
+                <span id="bpm-val" class="bpm-display text-orange">80 BPM</span>
+                <input type="range" id="tempo-bpm" min="40" max="200" value="80" class="tempo-slider" />
+              </div>
+              <button id="btn-metronome-sound-toggle" class="btn-icon-toggle" title="메트로놈 소리 켜기/끄기">
+                🔊
+              </button>
+            </div>
+
+            <!-- 실행 제어 그룹 -->
+            <div class="practice-action-group">
+              <button id="btn-demo-autoplay" class="btn btn-secondary btn-autoplay" style="color: var(--accent-cyan); border-color: var(--accent-cyan);">
+                ▶ 자동 연주
+              </button>
+              <button id="btn-play-pause-tempo" class="btn btn-primary btn-play">
+                ▶ 연습 시작 (Space)
+              </button>
+            </div>
           </div>
 
-          <!-- 실행 제어 그룹 -->
-          <div class="practice-action-group">
-            <button id="btn-demo-autoplay" class="btn btn-secondary btn-autoplay" style="color: var(--accent-cyan); border-color: var(--accent-cyan);">
-              ▶ 자동 연주
-            </button>
-            <button id="btn-play-pause-tempo" class="btn btn-primary btn-play">
-              ▶ 연습 시작 (Space)
-            </button>
-          </div>
-        </div>
-
-        <!-- 실시간 피드백 및 타겟 음 안내바 -->
-        <div class="feedback-bar">
-          <div class="feedback-left">
-            <span>🎯 다음에 칠 음:</span>
-            <span id="target-note-name" class="target-note-label">준비 중</span>
-            <span id="target-note-info" style="color: var(--text-secondary); font-size: 12px;">(키보드 안내를 보세요)</span>
-          </div>
-          <div class="feedback-right">
-            <span>🎹 현재 연주한 음:</span>
-            <span id="played-note-name" class="played-note-label">연주 대기</span>
+          <!-- 실시간 피드백 및 타겟 음 안내바 -->
+          <div class="feedback-bar">
+            <div class="feedback-left">
+              <span>🎯 다음에 칠 음:</span>
+              <span id="target-note-name" class="target-note-label">준비 중</span>
+              <span id="target-note-info" style="color: var(--text-secondary); font-size: 12px;">(키보드 안내를 보세요)</span>
+            </div>
+            <div class="feedback-right">
+              <span>🎹 현재 연주한 음:</span>
+              <span id="played-note-name" class="played-note-label">연주 대기</span>
+            </div>
           </div>
         </div>
 
