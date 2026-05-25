@@ -2,14 +2,14 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/letspiano/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/oh-my-band/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Oh My Band 🥁🎹</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/letspiano/assets/index-Bqc6ItcF.js"></script>
-    <link rel="stylesheet" crossorigin href="/letspiano/assets/index-CJdVGJoL.css">
+    <script type="module" crossorigin src="/oh-my-band/assets/index-CCuGIaYv.js"></script>
+    <link rel="stylesheet" crossorigin href="/oh-my-band/assets/index-DfiqopH5.css">
   </head>
   <body>
     <div class="container">
@@ -20,7 +20,7 @@
           <h1>
             <span class="logo-icon">🥁🎹</span> 
             <span class="logo-text">Oh My Band</span>
-            <span id="header-version" class="version-chip" title="업데이트 히스토리 보기">v202605232038</span>
+            <span id="header-version" class="version-chip" title="업데이트 히스토리 보기">v202605260109</span>
             <span id="header-mode-badge" class="mode-chip" style="display: none;">대기 연습</span>
             <span id="header-song-title" class="song-chip" style="display: none;">반짝반짝 작은 별</span>
           </h1>
@@ -383,11 +383,25 @@
         </div>
         <div class="modal-body changelog-list">
           
+          <!-- v202605260109 -->
+          <div class="changelog-version-group">
+            <div class="changelog-version-header">
+              <span class="changelog-version-num">v202605260109</span>
+              <span class="changelog-version-date">2026. 05. 26 (현재)</span>
+            </div>
+            <ul class="changelog-items">
+              <li class="changelog-item"><strong>태블릿 최적화 및 프리미엄 고정형 헤더바 전격 도입</strong>: 16px 마진의 세련된 글래스모피즘 스티키 플로팅 헤더바를 완비하여 악기 모드별 최적화된 동적 색상의 ⬅ 로비(뒤로가기) 단추로 자동 전환되도록 헤더 구조 완성.</li>
+              <li class="changelog-item"><strong>화면 높이 100dvh 대시보드 락 적용</strong>: 태블릿 피아노 거치대 환경에서 스크롤 Bouncing 및 불필요한 스크롤 발생을 억제하고 악보와 건반이 한 화면에 온전히 들어차도록 쾌적한 반응형 레이아웃 락 적용.</li>
+              <li class="changelog-item"><strong>가상 드럼 타격반 Pointer Event 지연 제거</strong>: 기존 300ms 터치 지연 유발 mousedown 이벤트를 Pointer Event 기반 pointerdown 모듈로 전면 교체하여 태블릿 터치 즉시 리얼타임 드럼 타격 사운드가 나도록 레이턴시 감쇄.</li>
+              <li class="changelog-item"><strong>레포지토리 브랜딩 개명</strong>: 기존 letspiano 및 piano 명칭을 다중 악기 종합 스튜디오를 상징하는 <strong>Oh My Band</strong>(oh-my-band)로 패키지 및 배포 환경 명칭 통합 변경.</li>
+            </ul>
+          </div>
+
           <!-- v202605232038 -->
           <div class="changelog-version-group">
             <div class="changelog-version-header">
               <span class="changelog-version-num">v202605232038</span>
-              <span class="changelog-version-date">2026. 05. 23 (현재)</span>
+              <span class="changelog-version-date">2026. 05. 23</span>
             </div>
             <ul class="changelog-items">
               <li class="changelog-item"><strong>피아노 이중 트리거 차단 및 280ms 디바운스 도입</strong>: 피아노 스피커 소리가 마이크로 재입력되어 건반이 순간적으로 두 번 전진하며 노트를 간헐적으로 건너뛰던 피드백 버그 해결을 위해 280ms 하드웨어 감쇄 디바운스 판정 기술 도입.</li>
