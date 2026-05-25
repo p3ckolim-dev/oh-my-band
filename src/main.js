@@ -891,6 +891,7 @@ class App {
     this.practiceModeBadge.className = badgeClass;
     
     // Toggle header mode/song visibility
+    document.body.classList.add("practice-active");
     if (this.headerElement) this.headerElement.classList.add("in-practice");
     if (this.headerVersion) this.headerVersion.style.display = "none";
     if (this.practiceSongTitle) this.practiceSongTitle.style.display = "inline-block";
@@ -967,6 +968,7 @@ class App {
     }
     
     // Toggle header mode/song visibility back to lobby
+    document.body.classList.remove("practice-active");
     if (this.headerElement) this.headerElement.classList.remove("in-practice");
     if (this.headerVersion) this.headerVersion.style.display = "inline-block";
     if (this.practiceSongTitle) this.practiceSongTitle.style.display = "none";
